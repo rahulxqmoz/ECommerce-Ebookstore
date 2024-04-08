@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% load static %}
+ <!-- Breadcrumb Start -->
+ <div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item"><a href="#">User</a></li>
+            <li class="breadcrumb-item active">Login</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+{% block content %}
+
+<div class="login">
+    <div class="container">
+        <div class="section-header">
+            <h3>User Login</h3>
+           
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="login-form">
+                    <form action="" method="post">
+                    <div class="row">
+                       
+                            {% csrf_token %}
+                        <div class="col-md-6">
+                            <label>E-mail</label>
+                            <input class="form-control" type="email" name="email" placeholder="email">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Password</label>
+                            <input class="form-control" type="password" name="password" placeholder="password">
+                        </div>
+                        <div class="col-md-12">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="newaccount">
+                                <label class="custom-control-label" for="newaccount">Keep me signed in</label>
+                            </div>
+                        </div>
+                        <span class="text-danger fw-5">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </span>
+                        <div class="col-md-12">
+                            <button class="btn">Submit</button>
+                        </div>
+                    
+                        <br>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
