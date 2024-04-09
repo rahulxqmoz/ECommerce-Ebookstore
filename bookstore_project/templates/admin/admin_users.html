@@ -1,0 +1,58 @@
+
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 mt-5"></div>
+        <div class="col-md-6 text-center mt-5">
+            <h2 class="mb-5 mt-5">Customers </h2>
+        </div>
+    </div>
+    <div class="card bg-light">
+        <div class="card-body">
+            <h5 class="card-title mt-3 mb-4">EBook Store Customers Table </h5>
+            <div class="col-12">
+                <div class="bg-light rounded h-100 p-4">
+                    <div class="table-responsive">
+                        <table class="table" id="sortTable">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Id</th>
+                                <th scope="col">First Name</th>
+                                <th scope="col">Last Name</th>
+                                <th scope="col">Email Address</th>
+                                <th scope="col">Phone</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for i in users %}
+                            {% if i.is_superuser != True %}
+                            <tr>
+                                <th scope="row">{{ forloop.counter }}</th>
+                                <td>{{ i.id }}</td>
+                                <td>{{i.first_name}}</td>
+                                <td>{{ i.last_name }}</td>
+                                <td>{{ i.email }}</td>
+                                <td>{{ i.phone }}</td>
+                                <td>{% if i.is_active %}<span class="fw-bold" style="color: green;"> Active </span> {% else %}<span class="fw-bold" style="color: red;"> Blocked </span> {% endif %}</td>
+                                <td><a href="{% url 'admin_user_manage' i.id %}"> {% if i.is_active %} <span class="text-danger"> Block </span> {% else %} <span class="text-success"> Unblock </span> {% endif %} </a></td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock  %}

@@ -59,8 +59,8 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return '{}'.format(self.email)
 
-class Products(models.Model):
-    product_title=models.CharField(max_length=150)
+
+
 
 class Forgotpassword(models.Model):
     user=models.OneToOneField(CustomUser,on_delete=models.CASCADE)

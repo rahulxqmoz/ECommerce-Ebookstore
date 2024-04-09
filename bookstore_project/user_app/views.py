@@ -229,7 +229,7 @@ def change_password(request,token):
             if newpassword == c_password:
                 user_obj=CustomUser.objects.get(id=user)
 
-                #hashed_password = make_password(newpassword)
+                
 
                 user_obj.set_password(newpassword)
                 user_obj.save()
