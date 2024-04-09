@@ -18,6 +18,7 @@ def admin_login(request):
         if admin:
             if admin.is_superuser:
                 login(request,admin)
+                request.session['email'] = email
                 return redirect('admin_dashboard')
             else:
                 messages.error(request,"You cant access this page with this credentials")    

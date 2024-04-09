@@ -61,3 +61,11 @@ class CustomUser(AbstractUser):
 
 class Products(models.Model):
     product_title=models.CharField(max_length=150)
+
+class Forgotpassword(models.Model):
+    user=models.OneToOneField(CustomUser,on_delete=models.CASCADE)
+    forgot_password_token=models.CharField(max_length=100)
+    created_at=models.DateTimeField(auto_now_add=True)
+
+    def _str_(self):
+        return self.user.email 
