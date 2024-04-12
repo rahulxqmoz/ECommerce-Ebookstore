@@ -1,0 +1,35 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+<div class="container mt-5">
+    <h2>Add Edition</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="editionName" class="form-label">Edition Name</label>
+            <input type="text" class="form-control" id="editionName" name="editioname" required>
+        </div>
+        <div class="mb-3">
+            <label for="editionDesc" class="form-label">Edition Description</label>
+            <textarea class="form-control" id="editionDesc" name="editiondesc" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="publicationYear" class="form-label">Publication Year</label>
+            <input type="number" class="form-control" id="publicationYear" name="year" required>
+        </div>
+        <div class="mb-3">
+            <label for="editionPublisher" class="form-label">Publisher</label>
+            <input type="text" class="form-control" id="editionPublisher" name="publisher" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </span></div>
+    </form>
+</div>
+
+
+{% endblock %}

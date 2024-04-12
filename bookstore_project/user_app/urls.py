@@ -14,4 +14,6 @@ urlpatterns = [
     path('user_log_out/', views.user_logout,name="user_logout"),
     path('forgot-password/', views.user_forgotpassword, name="forgot_password"),
     path('reset-password/<token>/', views.change_password, name="reset_password"),
+    path('product_detail/<int:id>/', views.product_detail, name="product_detail"),
+    path('browse_products/', views.browse_products, name="browse_products"),
 ]

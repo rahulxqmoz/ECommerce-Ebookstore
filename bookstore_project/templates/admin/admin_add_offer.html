@@ -1,0 +1,52 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+<div class="container mt-5">
+    <h2>Add Offer</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="offerName" class="form-label">Offer Name</label>
+            <input type="text" class="form-control" id="offerName" name="offername" required>
+        </div>
+        <div class="mb-3">
+            <label for="offPercent" class="form-label">Off Percent</label>
+            <input type="number" class="form-control" id="offPercent" name="offpercent" required>
+            
+        </div>
+        <div class="mb-3">
+            <div class="row">
+                
+                <div class="col-md-6">
+                    <label for="customDate" class="form-label">Valid From</label>
+                     <input type="date" id="customDate" class="form-control" name="valid_from" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="customDateTo" class="form-label">Valid To</label>
+                    <input type="date" id="customDateTo" class="form-control"  name="valid_to" required>
+                </div>
+            </div>
+           
+        </div>
+       
+      
+
+       
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="container">
+            <div class="row justify-content-center align-items-center">
+                <div class="col-md-6">
+                    <span class="text-danger fw-5">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </form>
+</div>
+
+
+{% endblock %}

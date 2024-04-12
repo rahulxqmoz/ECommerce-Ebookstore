@@ -33,8 +33,8 @@ class Author(models.Model):
     author_name=models.CharField(max_length=150)
     slug=models.SlugField(max_length=100,unique=True,blank=True)
     author_image=models.ImageField(upload_to='author_images/')
-    author_description=models.TextField()
-    is_active=models.BooleanField(default=True)
+    author_description=models.TextField(null=True)
+    is_active=models.BooleanField(default=True,null=False, blank=True)
 
 def _str_(self):
         return self.author_name
@@ -54,6 +54,7 @@ class Offer(models.Model):
     off_percent = models.PositiveBigIntegerField()
     start_date = models.DateField(validators=[validate_expiry_date])
     end_date = models.DateField()
+    is_active = models.BooleanField(default=True,null=False, blank=True)
 
     def __str__(self) -> str:
         return self.name
@@ -63,10 +64,20 @@ class Offer(models.Model):
         if self.end_date < date.today():
             return True
         return False
-    
+class Editions(models.Model):
+    editons_name=models.CharField(max_length=150)
+    slug=models.SlugField(max_length=100,unique=True,blank=True)
+    edition_description=models.TextField(null=True)
+    publication_year = models.PositiveIntegerField(default=0)
+    publisher = models.CharField(max_length=100,null=True)
+    is_active=models.BooleanField(default=True,null=False, blank=True)
+
+    def _str_(self):
+        return self.editons_name        
 
 class Product_variant(models.Model):
     variant_name=models.CharField(max_length=100,blank=True)
+    slug= models.SlugField(max_length=100,unique=True,blank=True)
     product = models.ForeignKey(Products,on_delete=models.CASCADE,null=True)
     category=models.ForeignKey(Category,on_delete=models.SET_NULL,null=True)
     author=models.ForeignKey(Author,on_delete=models.SET_NULL,null=True)
@@ -77,10 +88,11 @@ class Product_variant(models.Model):
     is_active=models.BooleanField(default=True)
     offer=models.ForeignKey(Offer,on_delete=models.SET_NULL,null=True)
     rating=models.IntegerField()
+    edition = models.ForeignKey(Editions,on_delete=models.CASCADE,null=True)
 
 
 class MultipleImages(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product_variant, on_delete=models.CASCADE)
     images = models.ImageField(upload_to='multiple_images/', blank=True)
 
     def _str_(self):
@@ -92,3 +104,5 @@ class ProductReview(models.Model):
     rating = models.IntegerField(default=0)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+

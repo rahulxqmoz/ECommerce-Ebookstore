@@ -19,6 +19,11 @@
         <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
         <link href="{% static 'lib/slick/slick.css' %}" rel="stylesheet">
         <link href="{% static 'lib/slick/slick-theme.css' %}" rel="stylesheet">
+        <!-- Select2 CSS -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<!-- Select2 JavaScript -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
         <!-- Template Stylesheet -->
         <link href="{% static 'css/style.css' %}" rel="stylesheet">
@@ -32,7 +37,7 @@
                     <div class="col-md-3">
                         <div class="logo">
                             <a href="">
-                                <img src="{% static 'img/logo.png' %}" alt="Logo">
+                                <img src="{% static 'img/booklogo.png' %}" alt="Logo">
                             </a>
                         </div>
                     </div>
@@ -80,8 +85,8 @@
 
                     <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
                         <div class="navbar-nav m-auto">
-                            <a href="index.html" class="nav-item nav-link active">Home</a>
-                            <a href="product-list.html" class="nav-item nav-link">Products</a>
+                            <a href="{% url 'index' %}" class="nav-item nav-link active">Home</a>
+                            <a href="{% url 'browse_products' %}" class="nav-item nav-link">Products</a>
                             <div class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Pages</a>
                                 <div class="dropdown-menu">

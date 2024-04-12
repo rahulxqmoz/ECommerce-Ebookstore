@@ -1,0 +1,90 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+<div class="container mt-5">
+    <h2>Add Products Variant</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="productName" class="form-label">Select Product</label>
+            <select class="form-select select2" id="productsName" name="product" required>
+                <option value="">Select Product</option>
+                {% for product in products %}
+                <option value="{{product.id}}">{{product.product_title}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="authorName" class="form-label">Select Author</label>
+            <select class="form-select select2" id="authorName" name="author" required>
+                <option value="">Select Author</option>
+                {% for author in authors %}
+                <option value="{{author.id}}">{{author.author_name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+      
+        <div class="mb-3">
+            <label for="categoryName" class="form-label">Select Category</label>
+            <select class="form-select select2" id="categoryName" name="category" required>
+                <option value="">Select Category</option>
+                {% for category in categories %}
+                <option value="{{category.id}}">{{category.category_name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="editionName" class="form-label">Select Edition</label>
+            <select class="form-select select2" id="editionName" name="edition" required>
+                <option value="">Select Edition</option>
+                {% for edition in editions %}
+                <option value="{{edition.id}}">{{edition.editons_name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        
+        <div class="mb-3">
+            <label for="priceVariant" class="form-label">Price</label>
+            <input type="number" class="form-control" id="priceVariant" name="price" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="offertName" class="form-label">Select Offer</label>
+            <select class="form-select select2" id="offertName" name="offer" required>
+                <option value="">Select Offer</option>
+                {% for offer in offers %}
+                <option value="{{offer.id}}">{{offer.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="stockVariant" class="form-label">Stock</label>
+             <input type="number" class="form-control" id="productsName" name="stock" required>
+        </div>
+        <div class="mb-3">
+            <label for="ratingVariant" class="form-label">Rating</label>
+            <input type="number" class="form-control" id="ratingVariant" name="rating" required>
+        </div>
+        <div class="mb-3">
+            <label class="text-danger">*Select two or more images for adding
+                multiple images *</label>
+            <div class="mb-3">
+                <input class="form-control" type="file" id="formFile" multiple id="formFile" name="multipleImage">
+                <label for="formFile" class="form-label">Choose your image</label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </span></div>
+    </form>
+</div>
+
+
+{% endblock %}

@@ -2,20 +2,20 @@
 {% load static %}
 {% block body %}
 <div class="container mt-5">
-    <h2>Add Category</h2>
+    <h2>Add Author</h2>
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
-            <label for="categoryName" class="form-label">Category Name</label>
-            <input type="text" class="form-control" id="categoryName" name="categoryName" required>
+            <label for="authorName" class="form-label">Author Name</label>
+            <input type="text" class="form-control" id="authorName" name="authorname" required>
         </div>
         <div class="mb-3">
-            <label for="categoryDescription" class="form-label">Category Description</label>
-            <textarea class="form-control" id="categoryDescription" name="categoryDescription" rows="3"></textarea>
+            <label for="authorDescription" class="form-label">Author Description</label>
+            <textarea class="form-control" id="authorDescription" name="authordesc" rows="3"></textarea>
         </div>
         <div class="mb-3">
-            <label for="categoryImage" class="form-label">Category Image</label>
-            <input type="file" class="form-control" id="categoryImage" name="categoryImage" accept="image/*" required>
+            <label for="authorImage" class="form-label">Author Image</label>
+            <input type="file" class="form-control" id="authorImage" name="authorimage" accept="image/*" required>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
         <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">

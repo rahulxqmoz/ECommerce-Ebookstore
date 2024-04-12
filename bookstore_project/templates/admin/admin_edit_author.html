@@ -1,0 +1,72 @@
+
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+
+<div class="container-fluid">
+    <div class="table-wrapper bg-light border">
+        <div class="table-title bg-light">
+            <div class="row">
+                <div class="col-md-3 mt-5"></div>
+                <div class="col-md-6 text-center mt-5">
+                    <h2>EDIT YOUR AUTHOR </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-grey p-5">
+            <div class="card-body" style="font-size: 1rem">
+                <h5 class="card-title text-white mb-5">Author Table</h5>
+
+                <!-- Edit category form  -->
+
+                <form enctype="multipart/form-data" method="post">
+                    {% csrf_token %}
+                    <div class="row mb-4">
+                        <div class="col">
+                          <div class="form-outline">
+                              <input type="text" id="form6Example1" value="{{ author.author_name }}" class="form-control bg-grey text-black" name="name" required/>
+                              <label class="form-label" for="form6Example1">Author Name</label>
+                          </div>
+                        </div>
+                    </div>
+
+                  
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="mb-4 d-flex justify-content-center align-items-center gap-3">
+                                <label for="currentFile" class="form-label">Author Image</label>
+                                {% if author.author_image %}
+                                    <img src="{{ author.author_image.url }}"
+                                    alt="category image" style="width: 10vw;" id="currentFile" />
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <div class="mb-3">
+                                    <input class="form-control bg-grey text-black" type="file" id="formFile" name="image">
+                                    <label for="formFile" class="form-label">Choose your image</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description input -->
+                    <div class="form-outline mb-4">
+                        <textarea class="form-control bg-grey text-black" id="productDesc" rows="4" name="description"> {{ author.author_description }} </textarea>
+                        <label class="form-label" for="productDesc">Author Description</label>
+                    </div>
+
+                    <!-- Submit button -->
+                    <div class="text-end">
+                        <button type="submit" class="btn-lg border-0 btn-success btn-block mb-4">Update</button>
+                    </div>
+                </form>
+              <!-- Edit product form end -->
+                <hr />
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

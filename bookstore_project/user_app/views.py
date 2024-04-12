@@ -1,3 +1,4 @@
+import random
 import uuid
 from django.shortcuts import render
 
@@ -11,10 +12,26 @@ from django.core.mail import send_mail
 from django.views.decorators.cache import cache_control
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.hashers import make_password
+from buyproducts.models import *
 # Create your views here.
 
 def index(request):
-    return render(request,'user/index.html')
+    context={}
+
+    products=Product_variant.objects.all()
+    
+    list_product=[]
+    
+
+    for i in range(len(products)):
+         list_product.append(products[i])
+
+    context={
+        'listproducts':list_product
+    }
+
+
+    return render(request,'user/index.html',context)
 
 def user_sign_up(request):
     if request.method=="POST":
@@ -261,3 +278,33 @@ def send_forget_password_mail(email, token):
     send_mail(subject, message, email_from, recipient_list)
     return True
 
+
+def product_detail(request,id):
+
+    product=Product_variant.objects.get(id=id)
+    product_images=MultipleImages.objects.filter(product=product)
+
+    context={}
+
+    product_singleinfo=product.product
+
+    context={
+        'productinfo':product,
+        'product_images':product_images
+    }    
+
+    return render(request,'user/product_detail.html',context)
+
+def browse_products(request):
+    context={}
+
+    products=Product_variant.objects.all()
+    
+    
+    
+
+   
+    context={
+        'listproducts':products
+    }
+    return render(request,'user/browse_products.html',context)
