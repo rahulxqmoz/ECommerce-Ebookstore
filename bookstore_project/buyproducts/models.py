@@ -1,7 +1,7 @@
 from django.db import models
 from django.forms import ValidationError
 
-from user_app.models import CustomUser
+from user_app.models import *
 from datetime import date
 # Create your models here.
 def validate_expiry_date(value):
@@ -59,11 +59,15 @@ class Offer(models.Model):
     def __str__(self) -> str:
         return self.name
     
+    
+        
+    
     def is_expired(self):
         print("date :::::::::::", date.today())
         if self.end_date < date.today():
             return True
         return False
+    
 class Editions(models.Model):
     editons_name=models.CharField(max_length=150)
     slug=models.SlugField(max_length=100,unique=True,blank=True)
@@ -90,6 +94,11 @@ class Product_variant(models.Model):
     rating=models.IntegerField()
     edition = models.ForeignKey(Editions,on_delete=models.CASCADE,null=True)
 
+    def offerprice(self):
+        offerprice=0
+        offerprice=int(self.product_price) - (int(self.product_price)  * int (self.offer.off_percent)/100)
+        return offerprice
+
 
 class MultipleImages(models.Model):
     product = models.ForeignKey(Product_variant, on_delete=models.CASCADE)
@@ -99,7 +108,7 @@ class MultipleImages(models.Model):
         return self.product.product_name
     
 class ProductReview(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product_variant, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
     rating = models.IntegerField(default=0)
     text = models.TextField()

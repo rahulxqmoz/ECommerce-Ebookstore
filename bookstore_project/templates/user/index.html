@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% load static %}
-
+{% load custom_tags %}
 {% block content %}
  <!-- Main Slider Start -->
  <div class="home-slider">
@@ -117,7 +117,7 @@
                 
                 <div class="product-item">
                     <div class="product-image">
-                        <a href="product-detail.html">
+                        <a href="{% url 'product_detail' product.id %}">
                             {% if product.product.product_image %}
                             <img src="{{product.product.product_image.url}}" alt="Product Image">
                         </a>
@@ -131,13 +131,19 @@
                     <div class="product-content">
                         <div class="title"><a href="#">{{product.variant_name}}</a></div>
                         <div class="ratting">
+                            {% for _ in product.rating|default:0|star_range  %}
                             <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
+                        {% endfor %}
                         </div>
-                        <div class="price">$22 <span>{{product.product_price}}</span></div>
+                        {% if offerprice %}
+                                 {% if product.id in offerprice %}
+                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ offerprice|get_item:product.id |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
+                                 {% else %}
+                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -172,165 +178,12 @@
 
 
 <!-- Recent Product Start -->
-<div class="recent-product">
-    <div class="container">
-        <div class="section-header">
-            <h3>Recent Product</h3>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec viverra at massa sit amet ultricies. Nullam consequat, mauris non interdum cursus
-            </p>
-        </div>
-        <div class="row align-items-center product-slider product-slider-4">
-            <div class="col-lg-3">
-                <div class="product-item">
-                    <div class="product-image">
-                        <a href="product-detail.html">
-                            <img src="{% static 'img/product-2.png' %}" alt="Product Image">
-                        </a>
-                        <div class="product-action">
-                            <a href="#"><i class="fa fa-cart-plus"></i></a>
-                            <a href="#"><i class="fa fa-heart"></i></a>
-                            <a href="#"><i class="fa fa-search"></i></a>
-                        </div>
-                    </div>
-                    <div class="product-content">
-                        <div class="title"><a href="#">Phasellus Gravida</a></div>
-                        <div class="ratting">
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                        </div>
-                        <div class="price">$22 <span>$25</span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3">
-                <div class="product-item">
-                    <div class="product-image">
-                        <a href="product-detail.html">
-                            <img src="{% static 'img/product-4.png' %}" alt="Product Image">
-                        </a>
-                        <div class="product-action">
-                            <a href="#"><i class="fa fa-cart-plus"></i></a>
-                            <a href="#"><i class="fa fa-heart"></i></a>
-                            <a href="#"><i class="fa fa-search"></i></a>
-                        </div>
-                    </div>
-                    <div class="product-content">
-                        <div class="title"><a href="#">Phasellus Gravida</a></div>
-                        <div class="ratting">
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                        </div>
-                        <div class="price">$22 <span>$25</span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3">
-                <div class="product-item">
-                    <div class="product-image">
-                        <a href="product-detail.html">
-                            <img src="{% static 'img/product-6.png' %}" alt="Product Image">
-                        </a>
-                        <div class="product-action">
-                            <a href="#"><i class="fa fa-cart-plus"></i></a>
-                            <a href="#"><i class="fa fa-heart"></i></a>
-                            <a href="#"><i class="fa fa-search"></i></a>
-                        </div>
-                    </div>
-                    <div class="product-content">
-                        <div class="title"><a href="#">Phasellus Gravida</a></div>
-                        <div class="ratting">
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                        </div>
-                        <div class="price">$22 <span>$25</span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3">
-                <div class="product-item">
-                    <div class="product-image">
-                        <a href="product-detail.html">
-                            <img src="{% static 'img/product-8.png' %}" alt="Product Image">
-                        </a>
-                        <div class="product-action">
-                            <a href="#"><i class="fa fa-cart-plus"></i></a>
-                            <a href="#"><i class="fa fa-heart"></i></a>
-                            <a href="#"><i class="fa fa-search"></i></a>
-                        </div>
-                    </div>
-                    <div class="product-content">
-                        <div class="title"><a href="#">Phasellus Gravida</a></div>
-                        <div class="ratting">
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                        </div>
-                        <div class="price">$22 <span>$25</span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3">
-                <div class="product-item">
-                    <div class="product-image">
-                        <a href="product-detail.html">
-                            <img src="{% static 'img/product-9.png' %}" alt="Product Image">
-                        </a>
-                        <div class="product-action">
-                            <a href="#"><i class="fa fa-cart-plus"></i></a>
-                            <a href="#"><i class="fa fa-heart"></i></a>
-                            <a href="#"><i class="fa fa-search"></i></a>
-                        </div>
-                    </div>
-                    <div class="product-content">
-                        <div class="title"><a href="#">Phasellus Gravida</a></div>
-                        <div class="ratting">
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                        </div>
-                        <div class="price">$22 <span>$25</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 <!-- Recent Product End -->
 
 
 <!-- Brand Start -->
-<div class="brand">
-    <div class="container">
-        <div class="section-header">
-            <h3>Our Brands</h3>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec viverra at massa sit amet ultricies. Nullam consequat, mauris non interdum cursus
-            </p>
-        </div>
-        <div class="brand-slider">
-            <div class="brand-item"><img src="{% static 'img/brand-1.png' %}" alt=""></div>
-            <div class="brand-item"><img src="{% static 'img/brand-2.png' %}" alt=""></div>
-            <div class="brand-item"><img src="{% static 'img/brand-3.png' %}" alt=""></div>
-            <div class="brand-item"><img src="{% static 'img/brand-4.png' %}" alt=""></div>
-            <div class="brand-item"><img src="{% static 'img/brand-5.png' %}" alt=""></div>
-            <div class="brand-item"><img src="{% static 'img/brand-6.png' %}" alt=""></div>
-        </div>
-    </div>
-</div>
+
 <!-- Brand End -->
 
 {% endblock %}

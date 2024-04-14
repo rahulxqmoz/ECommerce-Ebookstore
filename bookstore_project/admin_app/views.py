@@ -18,6 +18,9 @@ from buyproducts.models import *
 
 @cache_control(no_cache=True, no_store=True) 
 def admin_login(request):
+    if 'custom_user_id' in request.session:
+        return redirect('admin_dashboard')
+
     if request.method=="POST":
         email=request.POST["email"]
         password=request.POST["password"]
@@ -27,7 +30,7 @@ def admin_login(request):
         if admin:
             if admin.is_superuser:
                 login(request,admin)
-                request.session['email'] = email
+                request.session['custom_user_id'] = admin.id
                 return redirect('admin_dashboard')
             else:
                 messages.error(request,"You cant access this page with this credentials")    

@@ -70,3 +70,5 @@ class Forgotpassword(models.Model):
 
     def _str_(self):
         return self.user.email 
+
+    

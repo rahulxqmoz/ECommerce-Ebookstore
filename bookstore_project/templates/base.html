@@ -20,6 +20,7 @@
         <link href="{% static 'lib/slick/slick.css' %}" rel="stylesheet">
         <link href="{% static 'lib/slick/slick-theme.css' %}" rel="stylesheet">
         <!-- Select2 CSS -->
+        <script src="https://kit.fontawesome.com/0fc54a2091.js" crossorigin="anonymous"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 
 <!-- Select2 JavaScript -->
@@ -37,15 +38,19 @@
                     <div class="col-md-3">
                         <div class="logo">
                             <a href="">
-                                <img src="{% static 'img/booklogo.png' %}" alt="Logo">
+                                <img src="{% static 'img/blacklogo.png' %}" alt="Logo">
                             </a>
                         </div>
                     </div>
+                    
                     <div class="col-md-6">
+                        <form action="{% url 'user_search' %}" method="post">
+                            {% csrf_token %}
                         <div class="search">
-                            <input type="text" placeholder="Search">
+                            <input type="text" placeholder="Search" name="searchquery">
                             <button><i class="fa fa-search"></i></button>
                         </div>
+                    </form>    
                     </div>
                     <div class="col-md-3">
                         <div class="user">
@@ -87,19 +92,19 @@
                         <div class="navbar-nav m-auto">
                             <a href="{% url 'index' %}" class="nav-item nav-link active">Home</a>
                             <a href="{% url 'browse_products' %}" class="nav-item nav-link">Products</a>
+                            
                             <div class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Pages</a>
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Category</a>
                                 <div class="dropdown-menu">
-                                    <a href="product-list.html" class="dropdown-item">Product</a>
-                                    <a href="product-detail.html" class="dropdown-item">Product Detail</a>
-                                    <a href="cart.html" class="dropdown-item">Cart</a>
-                                    <a href="wishlist.html" class="dropdown-item">Wishlist</a>
-                                    <a href="checkout.html" class="dropdown-item">Checkout</a>
-                                    <a href="login.html" class="dropdown-item">Login & Register</a>
-                                    <a href="my-account.html" class="dropdown-item">My Account</a>
+                                    {% if category %}
+                                    {% for cat in category %}
+                                    <a href="#" class="dropdown-item">{{cat.category_name}}</a>
+                                    {% endfor %}
+                                    {% endif %}
                                 </div>
                             </div>
-                            <a href="contact.html" class="nav-item nav-link">Contact Us</a>
+
+                            <a href="#" class="nav-item nav-link">Contact Us</a>
                         </div>
                     </div>
                 </nav>
