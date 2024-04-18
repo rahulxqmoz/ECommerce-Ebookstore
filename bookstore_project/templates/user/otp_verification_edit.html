@@ -67,12 +67,12 @@
             
             if (regenerate) {
               
-                window.location.href = "{% url 'regenerate_otp' user.id %}";
+                window.location.href = "{% url 'regenerate_otp_edit' user.id %}";
             } else {
                 
                 alert("You chose not to regenerate OTP.");
                 
-                window.location.href = "{% url 'cancel_registration' user.id %}";
+                window.location.href = "{% url 'cancel_registration_edit' user.id %}";
             }
             // window.location.href = "{% url 'regenerate_otp' user.id %}";
 

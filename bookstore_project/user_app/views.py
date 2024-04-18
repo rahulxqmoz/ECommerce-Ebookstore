@@ -4,11 +4,14 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.contrib.auth.hashers import check_password
+
 
 
 # Create your views here.
 from django.conf import settings
 from django.shortcuts import redirect, render
+from cart.models import CartItem
 from user_app.models import CustomUser,Forgotpassword
 from django.contrib import messages
 from django.utils.crypto import get_random_string
@@ -35,8 +38,13 @@ def index(request):
         for offer in products:
             offerprice=int(offer.product_price)- int(offer.product_price) * (int(offer.offer.off_percent)/100)
             offers[offer.id] =offerprice
-                
-
+        if 'user' in request.session:        
+            user_id=CustomUser.objects.get(id=request.user.id)
+            if user_id:
+                cartitem=CartItem.objects.filter(customer=user_id).count()
+                request.session['cart_item_count'] = cartitem
+        else:
+            request.session['cart_item_count'] = 0
         
         for i in range(len(products)):
             list_product.append(products[i])
@@ -44,7 +52,8 @@ def index(request):
         context={
             'listproducts':list_product,
             'offerprice':offers,
-            'category':category
+            'category':category,
+            'count':request.session.get('cart_item_count', 0)
         }
 
 
@@ -68,13 +77,12 @@ def user_sign_up(request):
             exist_email = CustomUser.objects.filter(email=user_data['email'])
             exist_phone = CustomUser.objects.filter(phone=user_data['phonenumber'])
 
-        
-
-
             if exist_email:
                 messages.error(request,"Email already exists")
             elif exist_phone:
                 messages.error(request,"phone number already exists")
+            elif len(user_data['phonenumber'])!=10:
+                messages.error(request,"Enter valid phone number!")    
             else:
                 if (user_data['password']==user_data['c_passsword']):
                     hashed_password = make_password(user_data['password'])
@@ -129,7 +137,11 @@ def otp_verification(request,user_id):
             else:
                 messages.error(request, "Invalid OTP")
                 return redirect('otp_verification', user.id)
-
+        if not user.otp:
+            
+            user.delete()
+            messages.error(request, "OTP expired and registration cancelled.")
+            return redirect('user_sign_up')  
 
     except Exception as e:
         print(e)        
@@ -157,6 +169,19 @@ def regenerate_otp(request,user_id):
             print(e)
         return redirect('otp_verification', user_id)
     
+def cancel_registration(request,user_id):
+    try:
+       
+        user = CustomUser.objects.get(id=user_id)
+        user.delete()
+        messages.error(request,"Registration of user is cancelled")
+        return redirect('user_sign_up')
+    except Exception as e:
+        print(e)
+        messages.error(request,"Cancellation failed")
+        return redirect('user_sign_up')
+
+    
 
 def user_login(request):
     
@@ -181,34 +206,7 @@ def user_login(request):
         return redirect('user_login')
     return render(request, 'user/login.html')
 
-
-    # if request.method=="POST":
-    #     email=request.POST["email"]
-    #     password=request.POST["password"]
-        
-    #     user=authenticate(request,email=email,password=password)
-
        
-        
-    #     try:
-
-    #         if user:
-    #             if user.is_verified and user.is_superuser == False:
-    #                 login(request,user)
-    #                 request.session['user'] = email
-    #                 messages.success(request, "logged in successfully")
-    #                 return redirect('index')
-    #             else:
-    #                 if not user.is_verified:
-    #                     messages.success(request, "Verify your account.")
-    #                     return redirect('otp_verification', user.id)
-    #                 messages.error(request, "invalid credentials.")
-    #         else:
-    #             messages.error(request, "Invalid credentials.")
-    #             return redirect('user_login')
-    #     except Exception as e:
-    #         print(e)
-    # return render(request,'user/login.html')        
 
 
 
@@ -225,30 +223,7 @@ def send_otp_email(email, otp):
         print(e)    
 
 
-# def user_forgotpassword(request):
-#     if 'email' in request.session:
-#         return redirect('admin_dashboard')
-#     try:
-#         if request.method == 'POST':
-#             email = request.POST.get('email', None)
-#             my_user = CustomUser.objects.get(email=email)
-#             print(my_user)
-#             token = str(uuid.uuid4())
-#             print(my_user.id)
 
-#             profile_token = Forgotpassword.objects.get(user=my_user.id)
-#             print(profile_token)
-#             profile_token.forgot_password_token = token
-#             profile_token.save()
-
-#             send_forget_password_mail(email,token)
-#             messages.success(request, "Password reset link sent to the email.")
-#             return redirect('user_login')
-
-#     except Exception as e:
-#         messages.error(request, "User not found")
-#         print(e)
-#     return render(request, 'user/forgotpassword.html')
 
 def user_forgotpassword(request):
     if 'custom_user_id' in request.session:
@@ -383,7 +358,7 @@ def browse_products(request):
     try:
         context={}
 
-        products=Product_variant.objects.all()
+        products=Product_variant.objects.filter(Q(is_active=True) & Q(product__is_active=True))
         category=Category.objects.all().order_by('id')
         offers = {}
 
@@ -436,12 +411,13 @@ def user_search(request):
         context={}
         if request.method=="POST":
             query=request.POST.get('searchquery')
-            print(query)
+            category=Category.objects.all().order_by('id')
             search_result = Product_variant.objects.filter(
-            Q(product__product_title=query) | Q(author__author_name=query) | Q(edition__editons_name=query)
+            Q(product__product_title__icontains=query) | Q(author__author_name__icontains=query) | Q(edition__editons_name__icontains=query)
             )
             print(search_result)
-            context={'listproducts':search_result}
+            context={'listproducts':search_result,
+                     'category':category}
             return render(request,'user/user_search.html',context)
 
             
@@ -452,4 +428,238 @@ def user_search(request):
 
 
     return render(request,'user/user_search.html',context)
+
+
+def category_wise(request,id):
+    try:
+       
+        category = Category.objects.get(id=id)
+        product=Product_variant.objects.filter(category=category)
+        categoryall=Category.objects.all().order_by('id')
+        context={'listproducts':product,'category':categoryall,'categoryname':category}
+        return render(request,'user/category_wise.html',context)
    
+
+
+    except Exception as e:
+        print(e)
+        messages.error(request,"Category wise pick failed")
+        return redirect('index')        
+
+
+def user_profile(request):
+    try:
+        user=CustomUser.objects.get(id=request.user.id)
+        address=UserAddress.objects.filter(user=user)
+        context={}
+        if request.method=="POST":
+            first_name=request.POST.get('first_name')
+            last_name=request.POST.get('last_name')
+            phone=request.POST.get('phone')
+            email=request.POST.get('email')
+           
+            if(user.first_name!=first_name):
+                user.first_name=first_name
+            if(user.last_name!=last_name):
+                user.last_name=last_name
+            if(user.phone!=phone):
+                user.phone=phone
+
+            user.save()
+            messages.success(request,"User Updated Successfully")
+            return redirect('user_profile')
+        context={'user':user,'address':address}
+        return render(request,'user/user_profile.html',context)
+
+    except Exception as e:
+        print(e)
+        messages.error(request,"user not found!!")    
+    return render(request,'user/user_profile.html')
+
+def change_email(request,id):
+    try:
+        user=CustomUser.objects.get(id=id)
+        
+
+        context={}
+
+        context={'user':user}
+        if request.method=="POST":
+            email=request.POST.get('email')
+            if user.email != email:
+                otp=get_random_string(length=6, allowed_chars='1234567890')
+                user.otp=otp
+
+                send_otp_email(email,otp)
+
+                user.email=email
+
+                user.save()
+
+                request.session['old_email']=user.email
+                return redirect('otp_verification_edit',user_id=user.id)
+
+
+        return render(request,'change_email.html',context)
+    except Exception as e:
+        print(e)
+
+
+
+def change_password_user(request,id):
+    if 'custom_user_id' in request.session:
+        return redirect('admin_dashboard')
+    
+    context={}
+
+    try:
+        
+       
+        user=CustomUser.objects.get(id=id)
+        context={'user':user}
+        print(user)
+        if user is None:
+            messages.error(request,"No user Found")
+            return redirect("user_profile")
+
+        current_pass=request.POST.get('currentpassword')
+        newpassword=request.POST.get('password')
+        c_password=request.POST.get('c_password')
+
+        
+
+        if not check_password(current_pass, user.password):
+            messages.error(request, "Current password does not match")
+            return redirect("user_profile")
+
+        if newpassword == current_pass:
+            messages.error(request,"Use new password")
+            return redirect("user_profile")
+        
+        if newpassword == c_password:
+            
+
+            
+
+            user.set_password(newpassword)
+            user.save()
+            messages.success(request,"Password successfully changed.")
+            return render(request,'user/user_profile.html',context)
+
+        else:
+            messages.error(request,"Password doesnt match")
+            return redirect("user_profile")
+    except Exception as e:
+        print(e)   
+        messages.error(request,"Error Updating Password")
+        return redirect(f"user_profile") 
+    
+def add_address(request,id):
+    if 'custom_user_id' in request.session:
+        return redirect('admin_dashboard')
+    try:
+        if 'user' in request.session:
+            user = request.user
+        else:
+            messages.error(request,'You need to login first!')
+            return redirect('user_login')    
+        if request.method == 'POST':
+            name = request.POST['name']
+            if len(request.POST['phone']) == 10:
+                phone = request.POST['phone']
+            else:
+                messages.error(request,'Enter Valid Mobile Number!')
+                return redirect('add_address')    
+            address = request.POST['address']
+            town = request.POST['town']
+            zip = request.POST['zipcode']
+            location = request.POST['nearby_location']
+            district = request.POST['district']
+            state = request.POST['state']
+            if not name:
+                name = user.first_name
+
+
+            user_address = UserAddress(user=user, name=name, alternative_mobile=phone, address=address, town=town,
+                                       zip_code=zip, nearby_location=location, district=district,state=state )
+            user_address.save()
+            context={'user':user}
+            if id == 1:
+                return HttpResponse("Checkout")
+            else:
+                messages.success(request, "New address added.")
+                return render(request,'user/user_profile.html',context)
+    except Exception as e:
+        print(e)
+    return render(request, 'user/add_address.html')
+
+def edit_address(request,id):
+    try:
+        if 'user' in request.session:
+            user = request.user
+        else:
+            messages.error(request,'You need to login first!')
+            return redirect('user_login') 
+        addressUser=UserAddress.objects.get(id=id)
+        context={}
+        context={'addressuser':addressUser,'user':user}
+        
+        if request.method=='POST':
+            name = request.POST['name']
+            if len(request.POST['phone']) == 10:
+                phone = request.POST['phone']
+            else:
+                messages.error(request,'Enter Valid Mobile Number!')
+                return redirect('edit_address')    
+            address = request.POST['address']
+            town = request.POST['town']
+            zip = request.POST['zipcode']
+            location = request.POST['nearby_location']
+            district = request.POST['district']
+            state = request.POST['state']
+            if not name:
+                name = user.first_name
+            addressUser.name=name
+            addressUser.alternative_mobile =phone
+            addressUser.address=address
+            addressUser.town=town
+            addressUser.zip_code=zip
+            addressUser.nearby_location=location
+            addressUser.district=district
+            addressUser.state=state
+
+            addressUser.save()
+            messages.success(request, "Edit Success")
+            # return render(request,'user/user_profile.html',context) 
+            return redirect('user_profile')
+
+
+
+    except Exception as e:
+        print(e)
+        messages.error(request, "Edit Address error")
+        return render(request,'user/user_profile.html',context)    
+    return render(request,'user/edit_address.html',context)
+
+
+def delete_address(request,id):
+    try:
+        if 'user' in request.session:
+            user = request.user
+        else:
+            messages.error(request,'You need to login first!')
+            return redirect('user_login') 
+        if id!=0:
+            addressUser=UserAddress.objects.get(id=id)
+            context={'user':user}
+            addressUser.delete()
+            messages.success(request, "Delete Success")
+            # return render(request,'user/user_profile.html',context) 
+            return redirect('user_profile')
+        else:
+            return render(request,'user/user_profile.html',context) 
+    except Exception as e:
+        print(e)
+        messages.error(request, "Delete Address error")
+        return render(request,'user/user_profile.html',context)    
+        

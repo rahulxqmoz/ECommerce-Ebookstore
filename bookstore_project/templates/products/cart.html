@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load custom_tags %}
+
+{% block content %}
+
+        <!-- Breadcrumb Start -->
+        <div class="breadcrumb-wrap">
+            <div class="container">
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <li class="breadcrumb-item"><a href="#">Products</a></li>
+                    <li class="breadcrumb-item active">Cart</li>
+                </ul>
+            </div>
+        </div>
+        <!-- Breadcrumb End -->
+        
+        
+        <!-- Cart Start -->
+        <div class="cart-page">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div  class="row d-flex justify-content-center" style="align-items: center">
+                            <div id="error-message" style="color:red;">
+                                {% for message in messages %}
+                                                       {{ message }}
+                                                   {% endfor %}
+                        </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Total</th>
+                                        <th>Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="align-middle">
+                                    {% if cartitem %}
+                                    {% for item in cartitem %}
+                                    <tr data-item-id="{{ item.id }}">
+                                        {% if item.product.product.product_image %}
+                                        <td><a href="#"><img src="{{item.product.product.product_image.url}}" alt="Image"></a></td>
+                                        {% endif %}
+                                        <td ><a href="#">{{item.product.variant_name}}</a></td>
+                                        <td >{{item.product.offerprice|floatformat:0}}</td>
+                                        <td style="width: 250px;">
+                                            <div class="qty-cart">
+                                                <button class="btn-minus-cart"><i class="fa fa-minus"></i></button>
+                                                <input type="text" value="{{item.quantity}}" id="quantity-{{ item.id }}" class="quantity-input">
+                                                <button class="btn-plus-cart quantity-plus" data-item-id="{{ item.id }}"><i class="fa fa-plus"></i></button>
+                                            </div>
+                                        </td>
+                                        <td id="sub-total-{{ item.id }}">{{item.sub_total | floatformat:0}} </td>
+                                        <td><a href="{% url 'delete_cart' item.id %}"><button><i class="fa fa-trash"></i></button></a></td>
+                                    </tr>
+                                    
+                                    {% endfor %}
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="coupon">
+                            <input type="text" placeholder="Coupon Code">
+                            <button>Apply Code</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="cart-summary">
+                            <div class="cart-content">
+                                <h3>Cart Summary</h3>
+                                <p>Total MRP :<span id="subtotaloffer">{{ subtotaloffer }}</span></p>
+                                <p>Discount :<span id="discount">{{ discount }}</span></p>
+                                <p>Shipping Cost :<span id="shipping-cost">{{shipping}}</span></p>
+                                <h4>Grand Total :<span id="grand_total">{{ grand_total }}</span></h4>
+                            </div>
+                            <div class="cart-btn">
+                                <button>Update Cart</button>
+                                <button>Checkout</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Cart End -->
+
+
+        
+
+        <script>
+            $(document).ready(function() {
+                // Function to update cart item quantity and recalculate totals
+                function updateCartItemQuantity(itemId, newQuantity) {
+                    // Perform AJAX request to update cart item quantity on the server
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url 'update_cart_quantity' %}",
+                        data: {
+                            item_id: itemId,
+                            new_quantity: newQuantity,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.error) {
+                             
+                             $('#error-message').text(response.error);
+                             if (response.hide_quantity) {
+                                  // Hide quantity input
+
+                                $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input, .quantity-plus').prop('disabled', true);
+
+                            } else {
+                                // Show quantity input if not hidden
+                                $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input,.quantity-plus' ).prop('disabled', false);
+                            }
+
+                             } else {
+                           
+                            $('#sub-total-'+itemId).text(response.sub_total);
+                            $('#grand_total').text(response.grand_total);
+                            $('#subtotaloffer').text(response.subtotaloffer);
+                            $('#shipping-cost').text(response.shipping);
+                            $('#discount').text(response.discount);
+                           
+                            
+                            $('#error-message').text('');
+                            $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input,.quantity-plus' ).prop('disabled', false);
+                        }
+                        },
+                        error: function(xhr, status, error) {
+                           
+                        }
+                    });
+                }
+
+                
+        
+                // Event listener for quantity increase button
+                $('.btn-plus-cart').click(function() {
+                    var row = $(this).closest('tr');
+                    var itemId = row.data('item-id');
+                    var currentQuantity = parseInt(row.find('input[type="text"]').val());
+                    var newQuantity = currentQuantity + 1;
+                    row.find('input[type="text"]').val(newQuantity);
+                    
+        
+                    // Update cart item quantity and recalculate totals
+                    updateCartItemQuantity(itemId, newQuantity);
+                });
+
+                $('.qty-cart input[type="text"]').on('input', function() {
+                var row = $(this).closest('tr');
+                var itemId = row.data('item-id');
+                var newQuantity = parseInt($(this).val());
+                row.find('input[type="text"]').val(newQuantity);
+                
+                
+                
+              
+                updateCartItemQuantity(itemId, newQuantity);
+              
+
+              
+                });
+        
+                // Event listener for quantity decrease button
+                $('.btn-minus-cart').click(function() {
+                    var row = $(this).closest('tr');
+                    var itemId = row.data('item-id');
+                    var currentQuantity = parseInt(row.find('input[type="text"]').val());
+                    var newQuantity = currentQuantity - 1;
+                    if (newQuantity < 1) {
+                        newQuantity = 1;
+                    }
+                    row.find('input[type="text"]').val(newQuantity);
+        
+                    // Update cart item quantity and recalculate totals
+                    updateCartItemQuantity(itemId, newQuantity);
+                });
+
+                function updateAddToCartButtonState(row, quantity, stock) {
+                var addToCartButton = row.find('.btn-plus-cart');
+                if (quantity >= stock) {
+                addToCartButton.prop('disabled', true);
+                } else {
+                addToCartButton.prop('disabled', false);
+                }
+                }
+            });
+        </script>
+
+        
+
+{% endblock %}

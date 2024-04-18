@@ -23,7 +23,7 @@
         <script src="https://kit.fontawesome.com/0fc54a2091.js" crossorigin="anonymous"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 
-<!-- Select2 JavaScript -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
         <!-- Template Stylesheet -->
@@ -62,14 +62,30 @@
                                 {% endif %}
                                 
                                 <div class="dropdown-menu">
+                                   
+                                    {% if request.user.is_authenticated and not user.is_superuser %}
+                                    <a href="{% url 'user_profile' %}" class="dropdown-item">My Profile</a>
+                                    <a href="{% url 'user_logout' %}" class="dropdown-item">Log Out</a>
+                                    {% else %}
                                     <a href="{% url 'user_login' %}" class="dropdown-item">Login</a>
                                     <a href="{% url 'user_sign_up' %}" class="dropdown-item">Register</a>
-                                    <a href="{% url 'user_logout' %}" class="dropdown-item">Log Out</a>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="cart">
+                                
+                                
+                                {% if request.user.is_authenticated and not user.is_superuser %}
+                                {% if request.session.cart_item_count %}
+                                <a href="{% url 'view_cart' user.id %}"><i class="fa fa-cart-plus"></i></a>
+                                <span>({{ request.session.cart_item_count }})</span>
+                                {% else %}
+                                <span>(0)</span>
+                                {% endif %}
+                                {% else %}
                                 <i class="fa fa-cart-plus"></i>
                                 <span>(0)</span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -98,7 +114,7 @@
                                 <div class="dropdown-menu">
                                     {% if category %}
                                     {% for cat in category %}
-                                    <a href="#" class="dropdown-item">{{cat.category_name}}</a>
+                                    <a href="{% url 'category_wise' cat.id %}" class="dropdown-item">{{cat.category_name}}</a>
                                     {% endfor %}
                                     {% endif %}
                                 </div>
