@@ -1,0 +1,50 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+<div class="container mt-5">
+    <h2>Add Coupon</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if coupon %}
+        <div class="mb-3">
+            <label for="couponCode" class="form-label">Coupon Code</label>
+            <input type="text" class="form-control" value="{{ coupon.coupon_code}}" id="couponCode" name="couponcode" >
+        </div>
+        
+        <div class="mb-3">
+            <label for="minAmount" class="form-label">Minimum Amount</label>
+            <input type="number" class="form-control"  value="{{ coupon.min_amount}}" id="minAmount" name="minamount" >
+        </div>
+
+        <div class="mb-3">
+            <label for="offPercent" class="form-label">Off Percent</label>
+            <input type="number" class="form-control" id="offPercent" value="{{ coupon.off_percent }}" name="offpercent" >
+        </div>
+
+        <div class="mb-3">
+            <label for="maxDiscount" class="form-label">Maximum Discount</label>
+            <input type="number" class="form-control" id="maxDiscount" value="{{ coupon.max_discount }}" name="maxdiscount" >
+        </div>
+
+       
+        <div class="mb-3">
+            <label for="couponStock" class="form-label">Coupon Stock</label>
+            <input type="number" class="form-control" id="couponStock" value="{{ coupon.coupon_stock }}" name="couponstock" >
+        </div>
+        <div class="mb-3">
+            <label for="expiryDate" class="form-label">Expiry Date</label>
+             <input type="date" id="expiryDate" class="form-control" value="{{ coupon.expiry_date | date:'Y-m-d' }}" name="expirydate" >
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </span></div>
+        {% endif %}
+    </form>
+</div>
+
+
+{% endblock %}

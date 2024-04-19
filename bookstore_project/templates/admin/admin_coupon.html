@@ -1,0 +1,53 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+<div class="container-fluid">
+<div class="row">
+  <div class="col-12 mt-5">
+    <h3>View Author</h3>
+  </div>
+</div>
+<div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+    {% for message in messages %}
+        {{ message }}
+    {% endfor %}
+</span></div>
+<table class="table">
+  <thead class="thead-dark">
+    <tr>
+      
+      <th scope="col">Sl No</th>
+      <th scope="col">Coupon Code</th>
+      <th scope="col">Minimum Code</th>
+      <th scope="col">Off Percent</th>
+      <th scope="col">Max Discount</th>
+      <th scope="col">Coupon Stock</th>
+      <th scope="col">Expiry Date</th>
+      <th scope="col">Status</th>
+      <th scope="col">Edit | Delete/Unblock</th>
+    
+    </tr>
+  </thead>
+ 
+  <tbody>
+      {% for coupon in coupons %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td> {{coupon.coupon_code}}</td>
+      <td> {{coupon.min_amount}}</td>
+      <td> {{coupon.off_percent}}</td>
+      <td> {{coupon.max_discount}} </td>
+      <td> {{coupon.coupon_stock}} </td>
+      <td> {{coupon.expiry_date}} </td>
+        <td>{% if coupon.is_active %}<span class="fw-bold" style="color: green;"> Active </span> {% else %}<span class="fw-bold" style="color: red;"> Blocked </span> {% endif %}</td>
+      <td> <a href="{% url 'admin_edit_coupon' coupon.id %}"><button class="btn btn-primary" id="up">Edit</button></a> <a href="{% url 'admin_delete_coupon' coupon.id %}"><button class="btn btn-danger" id="up">delete/unblock</button></a></td>
+     
+    </tr>
+    
+  
+
+  {% endfor %}
+</tbody>
+</table>
+</div>
+ {% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+<div class="container mt-5">
+    <h2>Add Coupon</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="couponCode" class="form-label">Coupon Code</label>
+            <input type="text" class="form-control" id="couponCode" name="couponcode" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="minAmount" class="form-label">Minimum Amount</label>
+            <input type="number" class="form-control" id="minAmount" name="minamount" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="offPercent" class="form-label">Off Percent</label>
+            <input type="number" class="form-control" id="offPercent" name="offpercent" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="maxDiscount" class="form-label">Maximum Discount</label>
+            <input type="number" class="form-control" id="maxDisxount" name="maxdiscount" required>
+        </div>
+
+       
+        <div class="mb-3">
+            <label for="couponStock" class="form-label">Coupon Stock</label>
+            <input type="number" class="form-control" id="couponStock" name="couponstock" required>
+        </div>
+        <div class="mb-3">
+            <label for="expiryDate" class="form-label">Expiry Date</label>
+             <input type="date" id="expiryDate" class="form-control" name="expirydate" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </span></div>
+    </form>
+</div>
+
+
+{% endblock %}

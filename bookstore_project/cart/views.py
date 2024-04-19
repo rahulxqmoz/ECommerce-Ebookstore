@@ -1,9 +1,9 @@
 from django.contrib import messages
 from django.shortcuts import render,redirect
-
+import pdb
 from user_app.models import CustomUser
 from buyproducts.models import Product_variant
-from . models import Cart,CartItem
+from . models import Cart,CartItem, Coupon
 import uuid
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -69,7 +69,11 @@ def view_cart(request,id):
         else:
             user_id=CustomUser.objects.get(id=id)
             cartItem=CartItem.objects.filter(customer=user_id)
-            context={'cartitem':cartItem}
+            coupons=Coupon.objects.all().order_by('-id')
+            user_id = CustomUser.objects.get(id=request.user.id)
+            cart_item = CartItem.objects.filter(customer=user_id).first() 
+            cart_obj=Cart.objects.get(id=cart_item.cart.id)
+            context={'cartitem':cartItem,'coupons':coupons,'couponobj':cart_obj}
     except Exception as e:
         print(e)        
     return render(request,'products/cart.html',context)
@@ -94,45 +98,109 @@ def delete_cart(request,id):
 @csrf_exempt
 def update_cart_quantity(request):
     if request.method == 'POST' and request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-        item_id = request.POST.get('item_id')
-        new_quantity = int(request.POST.get('new_quantity', 1))
-        print(item_id)
-        # Retrieve the cart item
+        item_id_str = request.POST.get('item_id')
+        new_quantity_str = request.POST.get('new_quantity')
+        coupon_code=request.POST.get('coupon_code')
+      
+        
+
         try:
+            new_quantity = int(new_quantity_str) if new_quantity_str.isdigit() else 0
+        except ValueError:
+            new_quantity = 0
+        # Retrieve the cart item
+    
+        if item_id_str.isdigit():
+            item_id = int(item_id_str)
+           
             cart_item = CartItem.objects.get(id=item_id)
-        except CartItem.DoesNotExist:
-            return JsonResponse({'error': 'Cart item not found'})
-        if cart_item.product.stock < new_quantity:
-            return JsonResponse({'error': 'Item stock exceeded!!','hide_quantity': True})
+          
+        else:
+    
+            user = CustomUser.objects.get(id=request.user.id)
+            cart_item = CartItem.objects.filter(customer=user)
+            
+            
+        # try:
+        #     cart_item = CartItem.objects.get(id=item_id)
+        # except CartItem.DoesNotExist:
+        #     return JsonResponse({'error': 'Cart item not found'})
+        if new_quantity!=0:
+            if cart_item.product.stock < new_quantity:
+                return JsonResponse({'error': 'Item stock exceeded!!','hide_quantity': True})
 
         # Update the quantity of the cart item
-        cart_item.quantity = new_quantity
-        cart_item.save()
+        if new_quantity!=0:
+            cart_item.quantity = new_quantity
+            cart_item.save()
 
         # Calculate new subtotal and grand total
-        user=CustomUser.objects.get(id=request.user.id)
-        cartitem = CartItem.objects.filter(customer=user)
-        sub_total = int(cart_item.product.offerprice()) * new_quantity  
+        if new_quantity!=0:
+            user=CustomUser.objects.get(id=request.user.id)
+            cartitem = CartItem.objects.filter(customer=user)
+        else:
+            user=CustomUser.objects.get(id=request.user.id)
+            cartitem = CartItem.objects.filter(customer=user)   
+        if new_quantity!=0:
+            sub_total = int(cart_item.product.offerprice()) * new_quantity
+        else:
+            sub_total=sum(int(item.product.offerprice()) * item.quantity for item in cart_item)    
+            
         #sub_total=cart_item.sub_total()
         total_sub_total = cartitem.annotate(subtotal=F('product__product_price') * F('quantity'))
         total_sum = total_sub_total.aggregate(total_sum=Sum('subtotal'))
         user_id = CustomUser.objects.get(id=request.user.id)
         cart_item = CartItem.objects.filter(customer=user_id)
         total = sum(int(item.product.offerprice()) * item.quantity for item in cart_item)
-        discount = int(total_sum['total_sum']) - total
+        
+        
+               
+
+        discount_amount=0
+        tax=0
+        couponcode=" "
+        #add coupons
+        try:
+            get_coupon = Coupon.objects.get(coupon_code=coupon_code)
+        except Coupon.DoesNotExist:
+            get_coupon = None
+        
+        if get_coupon:
+            user_id = CustomUser.objects.get(id=request.user.id)
+            cart_item = CartItem.objects.filter(customer=user_id).first() 
+            cart_obj=Cart.objects.get(id=cart_item.cart.id)
+            cart_obj.coupon=get_coupon
+            
+            if get_coupon.min_amount > total:
+                return JsonResponse({'error': f'Amount should be greater than {get_coupon.min_amount}'})
+            
+            discount_amount = total * int(get_coupon.off_percent) / 100
+            if discount_amount > get_coupon.max_discount:
+                discount_amount = get_coupon.max_discount
+            
+            
+            cart_obj.save()
+            couponcode=get_coupon.coupon_code
+
+        discount = total_sum['total_sum'] - total
         shipping=0
         if total < 3000:
-            shipping=49
+            shipping=99
             total=total+shipping
         else:
-            shipping=0    
-
-
+            shipping=0     
+               
+        total=total-discount_amount
+        tax = (total * 3) // 100 
+        total=total+tax
+        user_id = CustomUser.objects.get(id=request.user.id)
+        cart_item = CartItem.objects.filter(customer=user_id).first() 
+        cart_obj=Cart.objects.get(id=cart_item.cart.id)
+        cart_obj.tax=tax
+        cart_obj.save()
         
-    
-        
-        # Return the updated subtotal and grand total 
-        return JsonResponse({'sub_total': sub_total, 'grand_total': total,'subtotaloffer':total_sum['total_sum'],'discount':discount,'shipping':shipping})
+         
+        return JsonResponse({'sub_total': sub_total, 'grand_total': total,'subtotaloffer':total_sum['total_sum'],'discount':discount,'shipping':shipping,'couponoffer':discount_amount,'tax':tax,'couponcode':couponcode})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 

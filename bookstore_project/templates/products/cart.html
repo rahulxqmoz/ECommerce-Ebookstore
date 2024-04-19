@@ -28,7 +28,7 @@
                             <div id="error-message" style="color:red;">
                                 {% for message in messages %}
                                                        {{ message }}
-                                                   {% endfor %}
+                                                   {% endfor %}
                         </div>
                         </div>
                         <div class="table-responsive">
@@ -72,19 +72,39 @@
                 </div>
                 <div class="row">
                     <div class="col-md-6">
+                       
+                        <h6 id="couponcode" style="color: green;">You have applied {{couponcode}}!!!</h6>
                         <div class="coupon">
-                            <input type="text" placeholder="Coupon Code">
-                            <button>Apply Code</button>
+                            <input id="couponCode" type="text" placeholder="Coupon Code">
+                            <button id="applyCoupon">Apply Code</button>
                         </div>
+                        <br>
+                        <div class="coupon">
+                            <label for="offertName" class="form-label">Available Coupons</label>
+                            <div style="overflow-y: scroll; max-height: 200px;"> <!-- Add a scrollbar to the list -->
+                                <ul class="list-group" id="offertName"> <!-- Use <ul> element for the list -->
+                                    <li class="list-group-item" style="font-weight: 700;color: darkgreen;">Coupons</li>
+                                    {% if coupons %}   
+                                    {% for coupon in coupons %}
+                                    <li class="list-group-item" value="{{coupon.id}}">{{coupon.coupon_code}}</li> <!-- Each coupon as a list item -->
+                                    {% endfor %}
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            
+                        </div>
+                        <br>
                     </div>
                     <div class="col-md-6">
                         <div class="cart-summary">
                             <div class="cart-content">
                                 <h3>Cart Summary</h3>
-                                <p>Total MRP :<span id="subtotaloffer">{{ subtotaloffer }}</span></p>
-                                <p>Discount :<span id="discount">{{ discount }}</span></p>
-                                <p>Shipping Cost :<span id="shipping-cost">{{shipping}}</span></p>
-                                <h4>Grand Total :<span id="grand_total">{{ grand_total }}</span></h4>
+                                <p>Total MRP :<span id="subtotaloffer">Rs.{{ subtotaloffer }}</span></p>
+                                <p>Discount :<span id="discount">Rs.{{ discount }}</span></p>
+                                <p>Coupon Discount :<span id="coupon_offer">Rs.{{couponoffer}}</span></p>
+                                <p>Shipping Cost :<span id="shipping-cost">Rs.{{shipping}}</span></p>
+                                <p>Tax :<span id="tax">Rs.{{tax}}</span></p>
+                                <h4>Grand Total :<span id="grand_total">Rs.{{ grand_total }}</span></h4>
                             </div>
                             <div class="cart-btn">
                                 <button>Update Cart</button>
@@ -103,7 +123,7 @@
         <script>
             $(document).ready(function() {
                 // Function to update cart item quantity and recalculate totals
-                function updateCartItemQuantity(itemId, newQuantity) {
+                function updateCartItemQuantity(itemId=null, newQuantity=null,couponCode = null) {
                     // Perform AJAX request to update cart item quantity on the server
                     $.ajax({
                         type: "POST",
@@ -111,6 +131,7 @@
                         data: {
                             item_id: itemId,
                             new_quantity: newQuantity,
+                            coupon_code: couponCode, 
                             csrfmiddlewaretoken: '{{ csrf_token }}'
                         },
                         success: function(response) {
@@ -134,8 +155,9 @@
                             $('#subtotaloffer').text(response.subtotaloffer);
                             $('#shipping-cost').text(response.shipping);
                             $('#discount').text(response.discount);
-                           
-                            
+                            $('#coupon_offer').text(response.couponoffer)
+                            $('#tax').text(response.tax)
+                            $('#couponcode').text(response.couponcode)
                             $('#error-message').text('');
                             $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input,.quantity-plus' ).prop('disabled', false);
                         }
@@ -189,6 +211,16 @@
         
                     // Update cart item quantity and recalculate totals
                     updateCartItemQuantity(itemId, newQuantity);
+                });
+
+                $('#applyCoupon').click(function() {
+                var couponCode = $('#couponCode').val(); // Get the entered coupon code
+                var row = $(this).closest('tr');
+                var itemId = row.data('item-id');
+                var currentQuantity = parseInt(row.find('input[type="text"]').val());
+            
+                // Update cart item quantity and recalculate totals
+                updateCartItemQuantity(itemId, currentQuantity, couponCode);
                 });
 
                 function updateAddToCartButtonState(row, quantity, stock) {

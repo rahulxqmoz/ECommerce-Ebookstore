@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import uuid
 from django.shortcuts import get_object_or_404, render,redirect
@@ -6,7 +7,8 @@ from django.contrib.auth import authenticate,login,logout
 from django.contrib import messages
 from django.views.decorators.cache import cache_control
 from django.contrib.admin.views.decorators import staff_member_required
-
+from django.utils import timezone
+from cart.models import Coupon
 from user_app.models import CustomUser
 from buyproducts.models import *
 
@@ -793,6 +795,148 @@ def admin_edit_variant(request,id):
 
     return render(request,'admin/admin_edit_productvariant.html',context)
 
+#Coupon----------------------------------------------------------------------------------------
 
 
-    
+
+@cache_control(no_cache=True, no_store=True)
+@staff_member_required(login_url='admin_login')
+def admin_add_coupon(request):
+    try:
+
+        if request.method=='POST':
+            couponcode=request.POST.get('couponcode')
+            off_percent = request.POST.get('offpercent')
+            min_amount = request.POST.get('minamount')
+            max_discount = request.POST.get('maxdiscount')
+            couponstock=request.POST.get('couponstock')
+            expiry_date_str = request.POST.get("expirydate")
+
+            
+            
+            # Validate coupon_code
+            if couponcode and couponcode.islower():
+                messages.warning(request, "Coupon code cannot contain small letters!")
+                return redirect('admin_add_coupon')
+            
+            if Coupon.objects.filter(coupon_code=couponcode).exists():
+                messages.warning(request, "this coupon is already in your account!")
+                return redirect('admin_add_coupon')
+
+            # Validate min_amount
+            if not min_amount.isdigit() or int(min_amount) < 500:
+                messages.warning(request, "Minimum amount must be a number greater than or equal to 500!")
+                return redirect('admin_add_coupon')
+
+            # Validate off_percent
+            if not off_percent.isdigit() or int(off_percent) <= 0:
+                messages.warning(request, "Off percent must be a positive number greater than 0!")
+                return redirect('admin_add_coupon')
+
+            # Validate max_discount
+            if not max_discount.isdigit() or int(max_discount) < int(off_percent):
+                messages.warning(request, "Max discount must be a number greater than or equal to Off percent!")
+                return redirect('admin_add_coupon')
+            
+            # Validate expiry_date
+            try:
+                expiry_date = datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                messages.warning(request, "Invalid expiry date format. Please use YYYY-MM-DD.")
+                return redirect('admin_add_coupon')
+
+            if expiry_date <= timezone.now().date():
+                messages.warning(request, "Expiry date should be in the future!")
+                return redirect('admin_add_coupon')
+
+            coupon = Coupon.objects.create(
+                        coupon_code = couponcode,
+                        min_amount = min_amount,
+                        off_percent = off_percent,
+                        max_discount = max_discount,
+                        expiry_date = expiry_date_str,
+                        coupon_stock=couponstock
+                    ).save()
+            
+            
+            messages.success(request,"Coupon Added")
+            return redirect('admin_add_coupon')
+            
+    except Exception as e:
+        
+        print(e)
+        messages.error(request,"Coupon save failed")
+        return redirect('admin_add_coupon')
+    return render(request,'admin/admin_add_coupon.html')
+
+
+@cache_control(no_cache=True, no_store=True)
+@staff_member_required(login_url='admin_login')
+def admin_coupon(request):
+    context = {}
+    try:
+        coupons = Coupon.objects.all().order_by('-id')
+        context = {
+            'coupons': coupons,
+        }
+    except Exception as e:
+        print(e)
+    return render(request,'admin/admin_coupon.html',context)
+
+@cache_control(no_cache=True, no_store=True)
+@staff_member_required(login_url='admin_login')
+def admin_delete_coupon(request,id):
+    try:
+        coupon=Coupon.objects.get(id=id)
+       
+        if coupon.is_active:
+
+            coupon.is_active=False
+            coupon.save()
+            messages.success(request,"Unlist Successfully")
+        else:
+            coupon.is_active=True
+            coupon.save() 
+            messages.success(request,"List Successfully") 
+               
+
+    except Exception as e:
+        print(e)    
+    return redirect('admin_coupon')
+
+@cache_control(no_cache=True, no_store=True)
+@staff_member_required(login_url='admin_login')
+def admin_edit_coupon(request, id):
+    try:
+        if request.method == "POST":
+            coupon_code = request.POST.get("couponcode")
+            min_amount = request.POST.get("minamount")
+            off_percent = request.POST.get("offpercent")
+            max_discount = request.POST.get("maxdiscount")
+            expiry_date_str = request.POST.get("expirydate")
+            coupon_stock = request.POST.get("couponstock")
+
+            if Coupon.objects.exclude(id=id).filter(coupon_code=coupon_code).exists():
+                messages.error(request, 'Coupon code must be unique.')
+                return redirect('admin_edit_coupon',id=id)
+
+            Coupon.objects.filter(id = id).update(
+                coupon_code = coupon_code,
+                min_amount = min_amount,
+                off_percent = off_percent,
+                max_discount = max_discount,
+                expiry_date = expiry_date_str,
+                coupon_stock=coupon_stock
+            )
+            messages.success(request, f'{coupon_code} updated succesfully.')
+            return redirect('admin_coupon')
+
+        coupon = Coupon.objects.get(id=id)
+        context = {
+            'coupon': coupon
+        }
+        return render(request, 'admin/admin_edit_coupon.html', context)
+    except Exception as e:
+        print(e)
+        messages.error(request, 'Edit Failed!!')
+        return render(request, 'admin/admin_edit_coupon.html', context)    
