@@ -10,9 +10,9 @@
   <div class="breadcrumb-wrap">
     <div class="container">
         <ul class="breadcrumb">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
             <li class="breadcrumb-item"><a href="#">User</a></li>
-            <li class="breadcrumb-item active">My Account</li>
+            
         </ul>
     </div>
 </div>
@@ -36,7 +36,7 @@
                     <a class="nav-link" id="payment-nav" data-toggle="pill" href="#payment-tab" role="tab">Payment Method</a>
                     <a class="nav-link" id="address-nav" data-toggle="pill" href="#address-tab" role="tab">address</a>
                     <a class="nav-link" id="account-nav" data-toggle="pill" href="#account-tab" role="tab">Account Details</a>
-                    <a class="nav-link" href="index.html">Logout</a>
+                    <a class="nav-link" href="{% url 'user_logout' %}">Logout</a>
                 </div>
             </div>
             <div class="col-md-9">
@@ -44,7 +44,7 @@
                     <div class="tab-pane fade show active" id="dashboard-tab" role="tabpanel" aria-labelledby="dashboard-nav">
                         <h4>Dashboard</h4>
                         <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. In condimentum quam ac mi viverra dictum. In efficitur ipsum diam, at dignissim lorem tempor in. Vivamus tempor hendrerit finibus. Nulla tristique viverra nisl, sit amet bibendum ante suscipit non. Praesent in faucibus tellus, sed gravida lacus. Vivamus eu diam eros. Aliquam et sapien eget arcu rhoncus scelerisque.
+                           User can have all the informations regarding thier accounts,orders,payments etc.
                         </p> 
                     </div>
                     <div class="tab-pane fade" id="orders-tab" role="tabpanel" aria-labelledby="orders-nav">
@@ -53,38 +53,27 @@
                                 <thead class="thead-dark">
                                     <tr>
                                         <th>No</th>
-                                        <th>Product</th>
+                                        <th>Orders</th>
                                         <th>Date</th>
-                                        <th>Price</th>
+                                        <th>Total Price</th>
                                         <th>Status</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% if orders %}
+                                    {% for order in orders %}
                                     <tr>
-                                        <td>1</td>
-                                        <td>Product Name</td>
-                                        <td>01 Jan 2020</td>
-                                        <td>$22</td>
-                                        <td>Approved</td>
-                                        <td><button>View</button></td>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{order.order_id}}</td>
+                                        <td>{{order.created}}</td>
+                                        <td>{{order.order_total}}</td>
+                                        <td>{{order.status}}</td>
+                                        <td><a href="{% url 'order_summary' order.id %}"><button>View</button></a></td>
                                     </tr>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Product Name</td>
-                                        <td>01 Jan 2020</td>
-                                        <td>$22</td>
-                                        <td>Approved</td>
-                                        <td><button>View</button></td>
-                                    </tr>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Product Name</td>
-                                        <td>01 Jan 2020</td>
-                                        <td>$22</td>
-                                        <td>Approved</td>
-                                        <td><button>View</button></td>
-                                    </tr>
+                                    {% endfor %}
+                                    {% endif %}
+                                   
                                 </tbody>
                             </table>
                         </div>

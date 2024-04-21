@@ -46,9 +46,10 @@ class CartItem(models.Model):
     customer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, blank=True, null=True)
     product = models.ForeignKey(Product_variant, on_delete=models.SET_NULL, null=True)
     cart = models.ForeignKey(Cart, on_delete=models.SET_NULL, null=True)
-    quantity = models.IntegerField(default=0)
+    quantity = models.IntegerField(default=1)
     active = models.BooleanField(default=True)
     created_date = models.DateField(auto_now_add=True)
+
     
 
     class Meta:

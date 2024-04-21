@@ -1,0 +1,48 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 mt-5">
+            <h3>ORDERS TABLE</h3>
+        </div>
+    </div>
+    <div class="row d-flex justify-content-center" style="align-items: center">
+        <span class="text-danger fw-5">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </span>
+    </div>
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Sr No</th>
+                <th scope="col">Date</th>
+                <th scope="col">Order Id</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Payment</th>
+                <th scope="col">Status</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ order.created }}</td>
+                <td>{{ order.order_id }}</td>
+                <td>{{ order.user.email }}</td>
+                <td>{{ order.order_total }}</td>
+                <td>{% if order.payment.is_paid %} Paid {% else %} Pending {% endif %}</td>
+                <td>{% if order.status %} {{ order.status }} {% else %} Pending {% endif %}</td>
+                <td><a class="btn btn-sm btn-warning" href="{% url 'admin_order_update' order.id %}">Detail</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

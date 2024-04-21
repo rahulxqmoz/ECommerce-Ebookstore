@@ -1,0 +1,165 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+
+<div class="container-fluid">
+    
+    <div class="table-wrapper border" style="background-color: white;">
+        <div class="table-title" style="background-color: white;">
+            <div class="row">
+                <div class="col-md-3 mt-5"></div>
+                <div class="col-md-6 text-center mt-5">
+                    <h2>ORDER DETAIL</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card p-5" style="background-color: white;">
+            <div class="card-body" style="font-size: 1rem">
+              <h5 class="card-title mb-5">ORDER UPDATE</h5>
+              <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </span></div>
+              <!-- Edit product form  -->
+                {% if order %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                        </div>
+
+              <div class="row">
+                    <div class="col-md-12">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Order Id</th>
+                                    <td>{{ order.order_id }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Customer</th>
+                                    <td>{{ order.user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Payment</th>
+                                    <td>{{ order.payment.payment_method }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Delivery Address</th>
+                                    <td>{{ order.address.name }}, {{ order.address.alt_mobile }}, {{ order.address.address }}, {{ order.address.nearby_location }}, {{ order.address.town }}, {{ order.address.zip_code }}, {{ order.address.district }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Order Total</th>
+                                    <td>Rs.{{ order.subtotal }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Paid Amount</th>
+                                    <td>Rs.{{ order.order_total }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Discount</th>
+                                    <td>Rs.{{ order.discount_amount }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Coupon</th>
+                                    <td>Rs.{{ order.coupon_amount }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Tax</th>
+                                    <td>Rs.{{ order.tax }}</td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row">Status</th>
+                                    <td>
+                                        <select class="form-select" aria-label="Default select example" name="orderStatus">
+                                            {% for value, label in order.STATUS %}
+                                            <option value="{{ value }}" {% if value == order.status %} selected {% endif %}>  {{ label }} </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row">Is Ordered</th>
+                                    <td>{{ order.is_ordered }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Coupon</th>
+                                    <td>{% if order.coupon %} {{ order.coupon.coupon_code }} {% else %} No coupon {% endif %}</td>
+                                </tr>
+                                {% for item in order_items %}
+                                <tr>
+                                    <th scope="row">Order Items</th>
+                                    <td>{{ item.variant }} <a href="" class="text-info" type="button" data-bs-toggle="modal" data-bs-target="#orderItemModal-{{ item.id }}">Details</a> &nbsp {% if item.return_request %} {% if item.is_returned %}<span class="text-primary">Item Returned</span> {% else %}<a href="" class="text-warning" type="button" data-bs-toggle="modal" data-bs-target="#returnRequest-{{ item.id }}">request</a> {% endif %} {% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+       <!-- Submit button -->
+                  <div class="text-end">
+                      <button type="submit" class="btn-lg border-0 btn-success btn-block mb-4">Save Product</button>
+                  </div>
+                </form>
+                {% endif %}
+              
+                <hr />
+            </div>
+        </div>
+    </div>
+</div>
+{% comment %} modal for order item  {% endcomment %}
+  
+{% for item in order_items %}
+  <!-- Modal -->
+  <div class="modal fade" id="orderItemModal-{{ item.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel"> Order Item </h5>
+        </div>
+        <div class="modal-body">
+            <div class="row mb-4">                
+                <div class="col-md-12 text-left" style="font-size: 20px;">
+                    <p> Product : </p>
+                    <p> {{ item.product.variant_name }} </p>
+                    <p> Quantity :</p>
+                    <p> {{ item.quantity }} </p>
+                    <p> Price : </p>
+                    <p> {{ item.product_price }} </p>
+                    <p> Return request : </p>
+                    <p> {{ item.return_request }} </p>
+                    <p> Return reason :  </p>
+                    <p> {{ item.return_reason }} </p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+
+
+
+
+
+{% endblock %}
+<script>
+     function hideModal(modalId) {
+        var modal = document.getElementById(modalId);
+        if (modal) {
+            var modalInstance = bootstrap.Modal.getInstance(modal);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        }
+    }
+</script>

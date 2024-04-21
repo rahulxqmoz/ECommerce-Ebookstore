@@ -23,9 +23,9 @@ urlpatterns = [
     path('user_profile/', views.user_profile, name="user_profile"),
     path('change_email/<int:id>/', views.change_email, name="change_email"),
     path('change_password/<int:id>/', views.change_password_user, name="change_password_user"),
-    path('add_address/<int:id>', views.add_address, name="add_address"),
-    path('edit_address/<int:id>', views.edit_address, name="edit_address"),
-    path('delete_address/<int:id>', views.delete_address, name="delete_address"),
-    
+    path('add_address/<int:id>/', views.add_address, name="add_address"),
+    path('edit_address/<int:id>/', views.edit_address, name="edit_address"),
+    path('delete_address/<int:id>/', views.delete_address, name="delete_address"),
+    path('order_summary/<int:id>/', views.order_summary, name="order_summary"),
    
 ]

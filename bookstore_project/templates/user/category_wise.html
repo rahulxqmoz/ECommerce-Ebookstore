@@ -133,7 +133,7 @@
                     <ul>
                         {% if category %}
                         {% for cat in category %}
-                        <li><a href="{% url 'category_wise' cat.id %}">{{cat.category_name}}</a><span>(83)</span></li>
+                        <li><a href="{% url 'category_wise' cat.id %}">{{cat.category_name}}</a><span>({{ cat.product_variant_set.count }})</span></li>
                         {% endfor %}
                         {% endif %}
                     </ul>

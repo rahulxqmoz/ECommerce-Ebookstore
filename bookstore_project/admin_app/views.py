@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.views.decorators.cache import cache_control
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils import timezone
+from order.models import Order, OrderProduct
 from cart.models import Coupon
 from user_app.models import CustomUser
 from buyproducts.models import *
@@ -940,3 +941,45 @@ def admin_edit_coupon(request, id):
         print(e)
         messages.error(request, 'Edit Failed!!')
         return render(request, 'admin/admin_edit_coupon.html', context)    
+
+#------------Order Managment-------------------------------------------------------
+@cache_control(no_cache=True, no_store=True)
+@staff_member_required(login_url='admin_login')
+def admin_order(request):
+    context = {}
+    try:
+        orders = Order.objects.all().order_by('-order_id')
+        context = {
+            'orders': orders,
+        }
+    except Exception as e:
+        print(e)
+    return render(request,'admin/admin_order.html',context)
+
+@cache_control(no_cache=True, no_store=True)
+@staff_member_required(login_url='admin_login')
+def admin_order_update(request,id):
+    context = {}
+    try:
+        order = Order.objects.get(id=id)
+        order_items = OrderProduct.objects.filter(order_id=id)
+        payment = order.payment
+        if request.method == 'POST':
+            order_status = request.POST.get('orderStatus', None)
+            if order_status:
+                order.status = order_status
+                order.save()
+            if order_status == 'Delivered':
+                payment.is_paid = True
+            payment.save()
+            messages.success(request, 'Status updated')
+            return redirect('admin_order_update', id)
+        context = {
+            'order': order,
+            'order_items': order_items,
+        }
+        return render(request, 'admin/admin_order_update.html', context)
+    except Exception as e:
+        print(e)
+    
+    return render(request,'admin/admin_order_update.html')

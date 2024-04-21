@@ -1753,3 +1753,10 @@ button.btn {
 .product-slider-single img.zoom:hover {
     transform: scale(1.2); /* Adjust the scale factor for the desired zoom level */
 }
+
+.dropdown-item-sort {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

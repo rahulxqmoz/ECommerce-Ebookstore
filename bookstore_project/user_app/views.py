@@ -3,14 +3,15 @@ import uuid
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q,Count
 from django.contrib.auth.hashers import check_password
 
 
-
+from django.contrib.auth.decorators import login_required
 # Create your views here.
 from django.conf import settings
 from django.shortcuts import redirect, render
+from order.models import *
 from cart.models import CartItem
 from user_app.models import CustomUser,Forgotpassword
 from django.contrib import messages
@@ -194,7 +195,7 @@ def user_login(request):
             email = request.POST.get('email')
             password = request.POST.get('password')
             user = authenticate(request,email=email, password=password)
-            if user is not None and  user.is_superuser==False:
+            if user is not None and  user.is_superuser==False and user.is_verified==True:
                     login(request, user)
                     request.session['user'] = email
                     return redirect('index')
@@ -366,6 +367,23 @@ def browse_products(request):
             offerprice=int(offer.product_price)- int(offer.product_price) * (int(offer.offer.off_percent)/100)
             offers[offer.id] =offerprice
                 
+         
+        sort_criteria = request.GET.get('sort_criteria')
+        if sort_criteria:
+            if(sort_criteria=="newest"):
+                products=Product_variant.objects.filter(is_active=True).order_by('-created_date')
+            if(sort_criteria=="price_low_to_high"):
+                products=Product_variant.objects.filter(is_active=True).order_by('product_price')
+            if(sort_criteria=="price_high_to_low"):
+                products=Product_variant.objects.filter(is_active=True).order_by('-product_price')
+            if(sort_criteria=="popular"):
+                products_popular = OrderProduct.objects.values('product').annotate(buy_count=Count('id')).order_by('-buy_count')
+                
+                products =  Product_variant.objects.annotate(
+                buy_count=Count('orderproduct')
+                ).order_by('-buy_count')     
+                    
+
 
         context={
             'listproducts':products,
@@ -376,7 +394,7 @@ def browse_products(request):
     except Exception as e:
         print(e)
         messages.error(request,"Page not found")
-        return render('index')
+        return redirect('index')
 
 
 def write_review(request):
@@ -451,6 +469,8 @@ def user_profile(request):
     try:
         user=CustomUser.objects.get(id=request.user.id)
         address=UserAddress.objects.filter(user=user)
+        orders = Order.objects.filter(user=user).order_by('-id')
+        category=Category.objects.all().order_by('id')
         context={}
         if request.method=="POST":
             first_name=request.POST.get('first_name')
@@ -468,7 +488,7 @@ def user_profile(request):
             user.save()
             messages.success(request,"User Updated Successfully")
             return redirect('user_profile')
-        context={'user':user,'address':address}
+        context={'user':user,'address':address,'orders':orders,'category':category}
         return render(request,'user/user_profile.html',context)
 
     except Exception as e:
@@ -585,14 +605,16 @@ def add_address(request,id):
             user_address.save()
             context={'user':user}
             if id == 1:
-                return HttpResponse("Checkout")
+                messages.success(request, "Address created.")
+                return redirect('place_order',id=user_address.id)
             else:
                 messages.success(request, "New address added.")
-                return render(request,'user/user_profile.html',context)
+                return redirect('user_profile')
     except Exception as e:
         print(e)
     return render(request, 'user/add_address.html')
 
+@login_required(login_url='user_login')
 def edit_address(request,id):
     try:
         if 'user' in request.session:
@@ -641,7 +663,7 @@ def edit_address(request,id):
         return render(request,'user/user_profile.html',context)    
     return render(request,'user/edit_address.html',context)
 
-
+@login_required(login_url='user_login')
 def delete_address(request,id):
     try:
         if 'user' in request.session:
@@ -662,4 +684,23 @@ def delete_address(request,id):
         print(e)
         messages.error(request, "Delete Address error")
         return render(request,'user/user_profile.html',context)    
+    
+@login_required(login_url='user_login')
+def order_summary(request,id):
+    context = {}
+    try:
+        if 'user' in request.session:
+            my_user = request.user
+            order_obj=Order.objects.get(id=id)
+            orders = OrderProduct.objects.filter(Q(customer=my_user) and Q(order_id=order_obj)).order_by('-order_id')
+            print(orders)
+           
+            context = {
+                'orders': orders,
+            }
+    except Exception as e:
+        print(e)
+        return redirect('user_profile')
+
+    return render(request,'user/orders.html',context)     
         

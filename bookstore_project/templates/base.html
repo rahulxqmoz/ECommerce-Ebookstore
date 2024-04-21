@@ -76,12 +76,10 @@
                                 
                                 
                                 {% if request.user.is_authenticated and not user.is_superuser %}
-                                {% if request.session.cart_item_count %}
+                               
                                 <a href="{% url 'view_cart' user.id %}"><i class="fa fa-cart-plus"></i></a>
                                 <span>({{ request.session.cart_item_count }})</span>
-                                {% else %}
-                                <span>(0)</span>
-                                {% endif %}
+                                
                                 {% else %}
                                 <i class="fa fa-cart-plus"></i>
                                 <span>(0)</span>
@@ -119,6 +117,9 @@
                                     {% endif %}
                                 </div>
                             </div>
+                            {% if request.user.is_authenticated and not user.is_superuser %}
+                            <a href="{% url 'user_profile' %}" class="nav-item nav-link">My Profile</a>
+                            {% endif %}
 
                             <a href="#" class="nav-item nav-link">Contact Us</a>
                         </div>

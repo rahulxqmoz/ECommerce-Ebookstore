@@ -46,5 +46,8 @@ urlpatterns = [
     path('admin_coupon/', views.admin_coupon,name='admin_coupon'),
     path('admin_delete_coupon/<int:id>', views.admin_delete_coupon,name='admin_delete_coupon'),
     path('admin_edit_coupon/<int:id>', views.admin_edit_coupon,name='admin_edit_coupon'),
+
+    path('admin_order/', views.admin_order,name='admin_order'),
+    path('admin_order_update/<int:id>', views.admin_order_update,name='admin_order_update'),
     
 ]

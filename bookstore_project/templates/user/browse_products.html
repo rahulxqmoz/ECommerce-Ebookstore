@@ -31,19 +31,27 @@
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="product-search">
-                                    <input type="email" value="Search">
+                                    <form action="{% url 'user_search' %}" method="post">
+                                        {% csrf_token %}
+                                    <input type="text" value="Search" name="searchquery">
                                     <button><i class="fa fa-search"></i></button>
+                                    </form>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="product-short">
-                                    <div class="dropdown">
-                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Product short by</a>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a href="#" class="dropdown-item">Newest</a>
-                                            <a href="#" class="dropdown-item">Popular</a>
+                                    <form id="sortForm" action="" method="get">
+                                        <input type="hidden" name="sort_criteria" value="">
+                                        <div class="dropdown">
+                                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Product short by</a>
+                                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                                                <a href="#" class="dropdown-item dropdown-item-sort" data-sort="newest">Newest</a>
+                                                <a href="#" class="dropdown-item dropdown-item-sort" data-sort="popular">Popular</a>
+                                                <a href="#" class="dropdown-item dropdown-item-sort" data-sort="price_low_to_high">Price: low to high</a>
+                                                <a href="#" class="dropdown-item dropdown-item-sort" data-sort="price_high_to_low">Price: high to low</a>
+                                            </div>
                                         </div>
-                                    </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -116,7 +124,7 @@
                     <ul>
                         {% if category %}
                         {% for cat in category %}
-                        <li><a href="{% url 'category_wise' cat.id %}">{{cat.category_name}}</a><span>(83)</span></li>
+                        <li><a href="{% url 'category_wise' cat.id %}">{{cat.category_name}}</a><span>({{ cat.product_variant_set.count }})</span></li>
                         {% endfor %}
                         {% endif %}
                     </ul>
@@ -137,6 +145,30 @@
     </div>
 </div>
 <!-- Product List End -->
+
+<script>
+    $(document).ready(function () {
+        $('.dropdown-item-sort').click(function (e) {
+            e.preventDefault();
+            var sortCriteria = $(this).data('sort');
+            var url = '/browse_products/?sort_criteria=' + sortCriteria; 
+            $('#sortForm input[name="sort_criteria"]').val(sortCriteria);
+            $('#sortForm').attr('action', url);
+            $('#sortForm').submit();
+
+            window.location.href = url;
+        });
+
+        $('a').not('.dropdown-item').click(function(e) {
+        // Only prevent default behavior if it's not a dropdown item link
+        if (!$(this).hasClass('dropdown-item')) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            window.location.href = href;
+        }
+    });
+    });
+</script>
 
 
 

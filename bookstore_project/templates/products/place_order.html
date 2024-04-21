@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load custom_tags %}
+
+{% block content %}
+ 
+ <!-- Breadcrumb Start -->
+ <div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item"><a href="#">Products</a></li>
+            <li class="breadcrumb-item active">Checkout</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+
+<!-- Checkout Start -->
+<div class="checkout">
+    <div class="container"> 
+        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </span></div>
+        <div class="row">
+            <div class="col-md-7">
+                <div class="billing-address">
+                    <h2>Billing Address Selected</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card" style="border: 5px solid #5897fb;border-radius: .25rem; width: 400px;box-shadow: 0 0 10px rgba(145, 23, 23, 0.1);">
+                               <div class="card-body">
+                                    {% if address %}
+                                    <h5 class="card-title">Address</h5>
+                                    <p class="card-text">Name: {{address.name}}</p>
+                                    <p class="card-text">E-mail: {{address.user.email}}</p>
+                                    <p class="card-text">Mobile No: {{address.alternative_mobile}}</p>
+                                    <p class="card-text">Address: {{address.address}}</p>
+                                    <p class="card-text">Town: {{address.town}}</p>
+                                    <p class="card-text">District: {{address.district}}</p>
+                                    <p class="card-text">State: {{address.state}}</p>
+                                    <p class="card-text">Zip-Code: {{address.zip_code}}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <br>
+                            <a href="{% url 'checkout_address' %}"><h6 style="color: blue;">Ship to different address</h6></a>
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+            <div class="col-md-5">
+                <div class="checkout-summary">
+                    <h2>Cart Total</h2>
+                    <div class="checkout-content">
+                        <h3>Products</h3>
+                        {% if cartitem %}
+                        {% for item in cartitem %}
+                        <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 400px;">{{item.product.variant_name|truncatechars:30}}<span>{{item.product.product_price}} x {{item.quantity}}</span></p>
+                        {% endfor %}
+                        {% endif %}
+                        
+                        <p class="sub-total">Sub Total<span><i class="fa-solid fa-indian-rupee-sign"></i> {{withoutoffer}}</span></p>
+                        <p>Discount<span><i class="fa-solid fa-indian-rupee-sign"></i> {{discount_amount}}</span></p>
+                        <p>Coupon Discount<span><i class="fa-solid fa-indian-rupee-sign"></i> {{coupon_amount}}</span></p>
+                        <p>Tax<span><i class="fa-solid fa-indian-rupee-sign"></i> {{tax}}</span></p>
+                        <p>Shipping Cost<span><i class="fa-solid fa-indian-rupee-sign"></i> {{shipping}}</span></p>
+                        
+                        <h4>Grand Total<span><i class="fa-solid fa-indian-rupee-sign"></i> {{withoffer}}</span></h4>
+                    </div>
+                </div>
+                 <form action="" method="post">
+                        {% csrf_token %}
+                <div class="checkout-payment">
+                    <h2>Payment Methods</h2>
+                    <div class="payment-methods">
+                        <div class="payment-method">
+                            <div class="custom-control custom-radio">
+                                <input type="radio" class="custom-control-input" id="payment-1" name="payment" value="paypal">
+                                <label class="custom-control-label" for="payment-1">Paypal</label>
+                            </div>
+                            <div class="payment-content" id="payment-1-show">
+                                <p>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras tincidunt orci ac eros volutpat maximus lacinia quis diam.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="payment-method">
+                            <div class="custom-control custom-radio">
+                                <input type="radio" class="custom-control-input" id="payment-2" name="payment" value="payoneer">
+                                <label class="custom-control-label" for="payment-2">Payoneer</label>
+                            </div>
+                            <div class="payment-content" id="payment-2-show">
+                                <p>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras tincidunt orci ac eros volutpat maximus lacinia quis diam.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="payment-method">
+                            <div class="custom-control custom-radio">
+                                <input type="radio" class="custom-control-input" id="payment-3" name="payment" value="checkpayment">
+                                <label class="custom-control-label" for="payment-3">Check Payment</label>
+                            </div>
+                            <div class="payment-content" id="payment-3-show">
+                                <p>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras tincidunt orci ac eros volutpat maximus lacinia quis diam.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="payment-method">
+                            <div class="custom-control custom-radio">
+                                <input type="radio" class="custom-control-input" id="payment-4" name="payment" value="directbank">
+                                <label class="custom-control-label" for="payment-4">Direct Bank Transfer</label>
+                            </div>
+                            <div class="payment-content" id="payment-4-show">
+                                <p>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras tincidunt orci ac eros volutpat maximus lacinia quis diam.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="payment-method">
+                            <div class="custom-control custom-radio">
+                                <input type="radio" class="custom-control-input" id="payment-5" name="payment" value="cod">
+                                <label class="custom-control-label" for="payment-5">Cash on Delivery</label>
+                            </div>
+                            <div class="payment-content" id="payment-5-show">
+                                <p>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras tincidunt orci ac eros volutpat maximus lacinia quis diam.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                   
+                    <div class="checkout-btn">
+                        <button>Place Order</button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Checkout End -->
+
+{% endblock %}

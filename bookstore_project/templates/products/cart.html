@@ -107,8 +107,7 @@
                                 <h4>Grand Total :<span id="grand_total">Rs.{{ grand_total }}</span></h4>
                             </div>
                             <div class="cart-btn">
-                                <button>Update Cart</button>
-                                <button>Checkout</button>
+                               <a href="{% url 'checkout_address'  %}"><button>Checkout</button></a> 
                             </div>
                         </div>
                     </div>
@@ -168,7 +167,7 @@
                     });
                 }
 
-                
+                updateCartItemQuantity();
         
                 // Event listener for quantity increase button
                 $('.btn-plus-cart').click(function() {
