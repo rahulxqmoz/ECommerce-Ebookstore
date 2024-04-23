@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load custom_tags %}
+
+{% block content %}
+
+<!-- Breadcrumb Start -->
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'browse_products' %}">Products</a></li>
+            <li class="breadcrumb-item active">Wishlist</li>
+        </ul>
+    </div>
+</div>
+<!-- Breadcrumb End -->
+
+<div class="text-center">
+    <span class="text-danger fw-5">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </span>
+</div>
+
+<!-- Wishlist Start -->
+<div class="cart-page">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Product Image</th>
+                                <th>Name</th>
+                                <th>Offer Price</th>
+                                <th>Add to Cart</th>
+                                <th>Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody class="align-middle">
+                            {% if wishlist %}
+                            {% for list in wishlist %}
+                            <tr>
+                                <td><a href="{% url 'product_detail' list.product.id %}">
+                                    {% if list.product.product.product_image %}
+                                    <img src="{{list.product.product.product_image.url}}" alt="Image">
+                                 {% endif %}</a></td>
+                                <td><a href="#">{{list.product.variant_name}}</a></td>
+                                <td>{{list.product.offerprice}}</td>
+                           <td>     <a href="{% url 'product_detail' list.product.id %}"> <button>View Product</button></a></td>
+                                <td><a href="{% url 'delete_wishlist' list.product.id %}"> <button><i class="fa fa-trash"></i></button></a></td>
+                            </tr>
+                            {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Wishlist End -->
+
+
+{% endblock %}

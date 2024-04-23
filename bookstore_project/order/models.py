@@ -35,6 +35,7 @@ class Order(models.Model):
     order_total = models.FloatField()
     discount_amount = models.FloatField(default=0, blank=True)
     tax = models.FloatField()
+    shipping_cost = models.FloatField(default=0)
     status = models.CharField(max_length=50, choices=STATUS, default="Order confirmed")
     is_ordered = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)

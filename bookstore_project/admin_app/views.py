@@ -648,7 +648,7 @@ def add_product_variant(request):
                     return redirect('admin_add_product_variant')  
                     
 
-                messages.success(request,"Product Variant SUccessfully added")  
+                messages.success(request,"Product Variant Successfully added!")  
                 return redirect('admin_add_product_variant')  
 
 
@@ -671,7 +671,7 @@ def add_product_variant(request):
 def admin_productvariant(request):
     context = {}
     try:
-        vairant = Product_variant.objects.all().order_by('id')
+        vairant = Product_variant.objects.all().order_by('-id')
         variant_images = {}
 
         for variant in vairant:
@@ -795,6 +795,18 @@ def admin_edit_variant(request,id):
 
 
     return render(request,'admin/admin_edit_productvariant.html',context)
+
+def delete_image(request, image_id):
+    try:
+
+        image = MultipleImages.objects.get(id=image_id)
+        variant_id = image.product.id
+        image.delete()
+        messages.success(request,'Delete successfull')
+        return redirect('admin_edit_variant',id=variant_id)
+    except Exception as e:
+        messages.success(request,'Delete Failed')
+        return redirect('admin_edit_variant',id=variant_id)    
 
 #Coupon----------------------------------------------------------------------------------------
 
@@ -948,7 +960,7 @@ def admin_edit_coupon(request, id):
 def admin_order(request):
     context = {}
     try:
-        orders = Order.objects.all().order_by('-order_id')
+        orders = Order.objects.all().order_by('-id')
         context = {
             'orders': orders,
         }

@@ -31,6 +31,14 @@
             <div class="col-md-7">
                 <div class="billing-address">
                     <h2>Billing Address Selected</h2>
+                    {% if address %}
+                    <a href="{% url 'edit_address' id=address.id page_id=1 %}">
+                        <h6 style="color: blue;">
+                            <span>Edit</span>
+                            <i class="fa fa-edit"></i> <!-- Assuming you're using Font Awesome for icons -->
+                        </h6>
+                    </a>
+                    {% endif %}
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card" style="border: 5px solid #5897fb;border-radius: .25rem; width: 400px;box-shadow: 0 0 10px rgba(145, 23, 23, 0.1);">

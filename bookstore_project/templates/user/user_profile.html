@@ -34,7 +34,7 @@
                     <a class="nav-link active" id="dashboard-nav" data-toggle="pill" href="#dashboard-tab" role="tab">Dashboard</a>
                     <a class="nav-link" id="orders-nav" data-toggle="pill" href="#orders-tab" role="tab">Orders</a>
                     <a class="nav-link" id="payment-nav" data-toggle="pill" href="#payment-tab" role="tab">Payment Method</a>
-                    <a class="nav-link" id="address-nav" data-toggle="pill" href="#address-tab" role="tab">address</a>
+                    <a class="nav-link" id="address-nav" data-toggle="pill" href="#address-tab" role="tab">Address</a>
                     <a class="nav-link" id="account-nav" data-toggle="pill" href="#account-tab" role="tab">Account Details</a>
                     <a class="nav-link" href="{% url 'user_logout' %}">Logout</a>
                 </div>
@@ -98,7 +98,7 @@
                                 <p>{{address.address}}</p>
                                 <p>Mob:{{address.alternative_mobile}}</p>
                                 <p>{{address.district}},{{address.state}}-{{address.zip_code}}</p>
-                                <a href="{% url 'edit_address' address.id %}"><button>Edit Address</button></a>
+                                <a href="{% url 'edit_address' id=address.id page_id=0 %}"><button>Edit Address</button></a>
                                 <!-- <a href="{% url 'delete_address' address.id %}"><button>Delete</button></a> -->
                                 <button onclick="confirmDelete('{{ address.id }}')">Delete</button>
                             </div>
@@ -109,7 +109,7 @@
                     </div>
                     <div class="tab-pane fade" id="account-tab" role="tabpanel" aria-labelledby="account-nav">
                         {% if user %}
-                        <h4 class="d-flex justify-content-between">Account Details <a href="" target="" rel=""><button class="btn btn-primary">Change Email</button></a></h4>
+                        <h4 class="d-flex justify-content-between">Account Details</h4>
                         
                         <form action="" method="post">
                         <div class="row">

@@ -54,7 +54,19 @@ def add_to_cart(request,id):
            if userexists.exists():
                 productexits = CartItem.objects.filter(Q(product=product) & Q(customer=user_obj))
                 if productexits.exists():
-                    messages.error(request,'Product Already in cart!!!')
+                    add_product=CartItem.objects.get(Q(product=product) & Q(customer=user_obj))
+                  
+                    if add_product.product.qty_per_person <= add_product.quantity:
+                        messages.error(request,f'User cannot add more than {add_product.product.qty_per_person} quantity to the cart!!!')
+                        return redirect('product_detail',id=id)
+                    elif add_product.product.stock <= add_product.quantity:
+                        messages.error(request,f'Item stock exhausted!!!')
+                        return redirect('product_detail',id=id)
+
+                    else:    
+                        add_product.quantity=add_product.quantity+1
+                        add_product.save()
+                    messages.success(request,'Successfully add one more quantity to cart!')
                     return redirect('product_detail',id=id)     
 
                 cart_obj =  userexists.first().cart 
@@ -119,9 +131,6 @@ def update_cart_quantity(request):
             item_id_str = request.POST.get('item_id')
             new_quantity_str = request.POST.get('new_quantity')
             coupon_code=request.POST.get('coupon_code')
-        
-            
-
             try:
                 new_quantity = int(new_quantity_str) if new_quantity_str.isdigit() else 0
             except ValueError:
@@ -138,18 +147,18 @@ def update_cart_quantity(request):
                 user = CustomUser.objects.get(id=request.user.id)
                 cart_item = CartItem.objects.filter(customer=user)
                 
-                
-            # try:
-            #     cart_item = CartItem.objects.get(id=item_id)
-            # except CartItem.DoesNotExist:
-            #     return JsonResponse({'error': 'Cart item not found'})
             if new_quantity!=0:
                 if cart_item.product.stock < new_quantity:
+
                     return JsonResponse({'error': 'Item stock exceeded!!','hide_quantity': True})
+           
+               
 
             # Update the quantity of the cart item
             if new_quantity!=0:
                 cart_item.quantity = new_quantity
+                if cart_item.product.qty_per_person < cart_item.quantity:
+                    return JsonResponse({'error': f'User cannot add more than {cart_item.product.qty_per_person} quantity to the cart!!','hide_quantity':True})    
                 cart_item.save()
 
             # Calculate new subtotal and grand total
@@ -170,9 +179,6 @@ def update_cart_quantity(request):
             user_id = CustomUser.objects.get(id=request.user.id)
             cart_item = CartItem.objects.filter(customer=user_id)
             total = sum(int(item.product.offerprice()) * item.quantity for item in cart_item)
-            
-            
-                
 
             discount_amount=0
             tax=0
@@ -206,7 +212,6 @@ def update_cart_quantity(request):
                 if discount_amount > get_coupon.max_discount:
                     discount_amount = get_coupon.max_discount
                 
-                
                 cart_obj.save()
                 couponcode=f'Applied coupon code {get_coupon.coupon_code} successfully'
 
@@ -227,8 +232,7 @@ def update_cart_quantity(request):
             cart_obj=Cart.objects.get(id=cart_item.cart.id)
             cart_obj.tax=tax
             cart_obj.save()
-            
-            
+
             return JsonResponse({'sub_total': sub_total, 'grand_total': total,'subtotaloffer':total_sum['total_sum'],'discount':discount,'shipping':shipping,'couponoffer':discount_amount,'tax':tax,'couponcode':couponcode})
     except Exception as e:
         print(e)
@@ -318,6 +322,7 @@ def place_order(request,id):
             else:
                 my_order.coupon=None    
             my_order.coupon_amount=coupon_discount
+            my_order.shipping_cost=shipping_cost
             paymentMethod=request.POST.get('payment')  
             my_order.save()
             yr = int(datetime.date.today().strftime('%Y'))

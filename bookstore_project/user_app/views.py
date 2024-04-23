@@ -1,6 +1,6 @@
 import random
 import uuid
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.db.models import Q,Count
@@ -30,7 +30,7 @@ def index(request):
         
         context={}
 
-        products=Product_variant.objects.all()
+        products=Product_variant.objects.filter(product__is_active=True,  is_active=True)
         
         list_product=[]
         category=Category.objects.all().order_by('id')
@@ -44,8 +44,11 @@ def index(request):
             if user_id:
                 cartitem=CartItem.objects.filter(customer=user_id).count()
                 request.session['cart_item_count'] = cartitem
+                wishcount = wishlist=Wishlist.objects.filter(user=user_id).count()
+                request.session['wishlishcount']=wishcount
         else:
             request.session['cart_item_count'] = 0
+            request.session['wishlishcount']=0
         
         for i in range(len(products)):
             list_product.append(products[i])
@@ -353,7 +356,7 @@ def product_detail(request,id):
     except Exception as e:
         print(e)
         messages.error(request,"Page not found")
-        return render('index')
+        return redirect('index')
 
 def browse_products(request):
     try:
@@ -431,8 +434,9 @@ def user_search(request):
             query=request.POST.get('searchquery')
             category=Category.objects.all().order_by('id')
             search_result = Product_variant.objects.filter(
-            Q(product__product_title__icontains=query) | Q(author__author_name__icontains=query) | Q(edition__editons_name__icontains=query)
-            )
+            Q(product__product_title__icontains=query) | Q(author__author_name__icontains=query) | Q(edition__editons_name__icontains=query),
+            product__is_active=True,  
+            is_active=True )
             print(search_result)
             context={'listproducts':search_result,
                      'category':category}
@@ -447,13 +451,47 @@ def user_search(request):
 
     return render(request,'user/user_search.html',context)
 
+def search_suggestions(request):
+    try:
+        if request.method == "GET":
+            query = request.GET.get('query', '')
+            suggestions = []
+            if query:
+                # Query your database for relevant suggestions based on the input query
+                products = Products.objects.filter(product_title__icontains=query)[:5]
+                if products:
+                    suggestions = [product.product_title for product in products]
+                author = Author.objects.filter(author_name__icontains=query)[:5] 
+                if author:
+                    suggestions= [author.author_name for author in author]            
+            
+            return JsonResponse({'suggestions': suggestions})
+        elif request.method == "POST":
+            query = request.POST.get('searchquery', '')
+            print(query)
+            category = Category.objects.all().order_by('id')
+            search_result = Product_variant.objects.filter(
+                Q(product__product_title__icontains=query) |
+                Q(author__author_name__icontains=query) |
+                Q(edition__editons_name__icontains=query),
+                product__is_active=True,
+                is_active=True
+            )
+            context = {
+                'listproducts': search_result,
+                'category': category
+            }
+            return render(request, 'user/browse_products.html', context)
+    except Exception as e:
+        print(e)
+
 
 def category_wise(request,id):
     try:
        
         category = Category.objects.get(id=id)
-        product=Product_variant.objects.filter(category=category)
-        categoryall=Category.objects.all().order_by('id')
+        product=Product_variant.objects.filter(category=category, is_active=True)
+        categoryall = Category.objects.filter(product_variant__is_active=True).distinct().order_by('-id')
         context={'listproducts':product,'category':categoryall,'categoryname':category}
         return render(request,'user/category_wise.html',context)
    
@@ -615,7 +653,7 @@ def add_address(request,id):
     return render(request, 'user/add_address.html')
 
 @login_required(login_url='user_login')
-def edit_address(request,id):
+def edit_address(request,id,page_id):
     try:
         if 'user' in request.session:
             user = request.user
@@ -651,9 +689,13 @@ def edit_address(request,id):
             addressUser.state=state
 
             addressUser.save()
-            messages.success(request, "Edit Success")
-            # return render(request,'user/user_profile.html',context) 
-            return redirect('user_profile')
+            if page_id=='0':
+                messages.success(request, "Edit Success")
+                # return render(request,'user/user_profile.html',context) 
+                return redirect('user_profile')
+            else:
+                messages.success(request, "Edit Success")
+                return redirect('place_order',id=addressUser.id)
 
 
 

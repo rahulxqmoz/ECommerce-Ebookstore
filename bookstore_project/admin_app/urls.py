@@ -41,6 +41,7 @@ urlpatterns = [
     path('admin_productvariant/', views.admin_productvariant,name='admin_productvariant'),
     path('admin_edit_variant/<int:id>', views.admin_edit_variant,name='admin_edit_variant'),
     path('admin_delete_variant/<int:id>', views.admin_delete_variant,name='admin_delete_variant'),
+    path('delete_image/<int:image_id>', views.delete_image,name='delete_image'),
 
     path('admin_add_coupon/', views.admin_add_coupon,name='admin_add_coupon'),
     path('admin_coupon/', views.admin_coupon,name='admin_coupon'),

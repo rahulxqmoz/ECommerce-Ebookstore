@@ -4,8 +4,36 @@
 
 {% load custom_tags %}
 
-{% block content %}
 
+
+{% block content %}
+<style>
+    #search-suggestions-container-browse {
+    position: absolute;
+    top: calc(100% + 5px); /* Position it just below the search input */
+    left: 0;
+    width: 100%;
+    background-color: #fff; /* Background color */
+    border: 1px solid #ccc; /* Border */
+    border-top: none; /* Remove top border */
+    border-radius: 0 0 5px 5px; /* Rounded corners at bottom */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Shadow */
+    z-index: 999; /* Ensure it's above other elements */
+    max-height: 200px; /* Limit maximum height for scrollability */
+    overflow-y: auto; /* Enable vertical scrolling if needed */
+}
+
+#search-suggestions-container-browse div {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+#search-suggestions-container-browse div:hover {
+    background-color: #f4f4f4; /* Hover background color */
+}
+
+</style>
 
 
 <!-- Breadcrumb Start -->
@@ -29,15 +57,7 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="row">
-                            <div class="col-md-8">
-                                <div class="product-search">
-                                    <form action="{% url 'user_search' %}" method="post">
-                                        {% csrf_token %}
-                                    <input type="text" value="Search" name="searchquery">
-                                    <button><i class="fa fa-search"></i></button>
-                                    </form>
-                                </div>
-                            </div>
+                          
                             <div class="col-md-4">
                                 <div class="product-short">
                                     <form id="sortForm" action="" method="get">
@@ -75,7 +95,7 @@
                                 </div>
                             </div>
                             <div class="product-content">
-                                <div class="title"><a href="#">{{product.variant_name}}</a></div>
+                                <div class="title"><a href="#" style="font-size: smaller;">{{product.variant_name}}</a></div>
                                 <div class="ratting">
                                     {% for _ in product.rating|default:0|star_range  %}
                                     <i class="fa fa-star"></i>
@@ -83,12 +103,12 @@
                                 </div>
                                 {% if offerprice %}
                                  {% if product.id in offerprice %}
-                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ offerprice|get_item:product.id |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
+                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ offerprice|get_item:product.id |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
                                  {% else %}
-                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
                         {% endif %}
                         {% else %}
-                        <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                        <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
                         {% endif %}
                             </div>
                         </div>
@@ -168,6 +188,68 @@
         }
     });
     });
+
+
+
+
+    // Attach event listener to search input field
+    document.querySelector('.product-search.browse input[name="searchquery"]').addEventListener('input', function() {
+
+    var query = this.value;
+    if (query.length >= 2) { // Optionally, check if the query length is sufficient
+        fetchSuggestions(query);
+    }
+});
+
+// Function to fetch search suggestions via AJAX
+function fetchSuggestions(query) {
+    fetch('/search_suggestions/?query=' + query)
+        .then(response => response.json())
+        .then(data => {
+            // Update the search suggestion dropdown with the received suggestions
+            updateSuggestionsDropdown(data.suggestions);
+        })
+        .catch(error => {
+            console.error('Error fetching search suggestions:', error);
+        });
+}
+
+// Function to update the search suggestion dropdown
+function updateSuggestionsDropdown(suggestions) {
+    var container = document.getElementById('search-suggestions-container-browse');
+    // Clear existing suggestions
+    container.innerHTML = '';
+    // Populate container with new suggestions
+    suggestions.forEach(suggestion => {
+        var suggestionElement = document.createElement('div');
+        suggestionElement.textContent = suggestion;
+        suggestionElement.classList.add('suggestion-item'); // Add a class for styling
+        suggestionElement.addEventListener('click', function() {
+            // When suggestion is clicked, populate the input field with the suggestion text
+            var inputField = document.querySelector('input[name="searchquery"]');
+            inputField.value = suggestion;
+            // Trigger the search
+            triggerSearch();
+        });
+        container.appendChild(suggestionElement);
+    });
+}
+// Event listener to handle clicks on suggestion items
+document.addEventListener('click', function(event) {
+    if (event.target.matches('.suggestion-item')) {
+        var suggestion = event.target.textContent;
+        var inputField = document.querySelector('.product-search.browse input[name="searchquery"]');
+        inputField.value = suggestion;
+        triggerSearch();
+    }
+});
+
+
+function triggerSearch() {
+    var form = document.querySelector('.product-search.browse form');
+    form.submit();
+}
+
 </script>
 
 

@@ -99,7 +99,7 @@
                         <div class="cart-summary">
                             <div class="cart-content">
                                 <h3>Cart Summary</h3>
-                                <p>Total MRP :<span id="subtotaloffer">Rs.{{ subtotaloffer }}</span></p>
+                                <p>Sub Total :<span id="subtotaloffer">{{ subtotaloffer }}</span></p>
                                 <p>Discount :<span id="discount">Rs.{{ discount }}</span></p>
                                 <p>Coupon Discount :<span id="coupon_offer">Rs.{{couponoffer}}</span></p>
                                 <p>Shipping Cost :<span id="shipping-cost">Rs.{{shipping}}</span></p>
@@ -139,10 +139,26 @@
                              $('#error-message').text(response.error);
                              if (response.hide_quantity) {
                                   // Hide quantity input
-
+                                var quantityInput = $('#quantity-' + itemId);
                                 $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input, .quantity-plus').prop('disabled', true);
+                                
+                                var currentQuantity = parseInt(quantityInput.val());
+                                if (currentQuantity > 1) {
+                                  // Only decrement if the current quantity is greater than 1
+                                 quantityInput.val(currentQuantity - 1);
+                                }
+                            
 
-                            } else {
+                            }
+                            if (response.qtr_per_person) {
+                                 
+                                $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input, .quantity-plus').prop('disabled', true);
+                                
+                                
+                            
+
+                            } 
+                            else {
                                 // Show quantity input if not hidden
                                 $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input,.quantity-plus' ).prop('disabled', false);
                             }

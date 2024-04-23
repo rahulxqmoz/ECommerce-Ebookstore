@@ -69,6 +69,11 @@
                                     <th scope="row">Tax</th>
                                     <td>Rs.{{ order.tax }}</td>
                                 </tr>
+                                <tr>
+                                    <th scope="row">Shipping Cost</th>
+                                    <td>Rs.{{ order.shipping_cost }}</td>
+                                </tr>
+
 
                                 <tr>
                                     <th scope="row">Status</th>
@@ -124,18 +129,33 @@
         </div>
         <div class="modal-body">
             <div class="row mb-4">                
-                <div class="col-md-12 text-left" style="font-size: 20px;">
-                    <p> Product : </p>
-                    <p> {{ item.product.variant_name }} </p>
-                    <p> Quantity :</p>
-                    <p> {{ item.quantity }} </p>
-                    <p> Price : </p>
-                    <p> {{ item.product_price }} </p>
-                    <p> Return request : </p>
-                    <p> {{ item.return_request }} </p>
-                    <p> Return reason :  </p>
-                    <p> {{ item.return_reason }} </p>
+                <div class="col-md-12 text-left">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Product:</th>
+                                <td>{{ item.product.variant_name}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Quantity:</th>
+                                <td>{{ item.quantity }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Price:</th>
+                                <td>{{ item.product_price }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Return request:</th>
+                                <td>{{ item.return_request }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Return reason:</th>
+                                <td>{{ item.return_reason }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+        
             </div>
         </div>
         <div class="modal-footer">

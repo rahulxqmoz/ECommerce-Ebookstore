@@ -29,7 +29,7 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="row">
-                            <div class="col-md-8">
+                            <div class="col-md-12" style="text-align: center;font-weight: 700;">
                                 <div class="product-search">
                                    <h2>Search Results</h2>
                                 </div>
@@ -64,9 +64,9 @@
                                 </div>
                                 {% if product.offerprice %}
                                 
-                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.offerprice |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
+                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.offerprice |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
                                  {% else %}
-                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
                                 {% endif %}
                        
                             </div>

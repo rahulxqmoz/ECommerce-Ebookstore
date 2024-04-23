@@ -37,9 +37,9 @@
  <!-- Main Slider Start -->
  <div class="home-slider">
     <div class="main-slider">
-        <div class="main-slider-item"><img src="{% static 'img/sliderimage1.jpg' %}" alt="Slider Image" /></div>
-        <div class="main-slider-item"><img src="{% static 'img/sliderimage2.jpg' %}" alt="Slider Image" /></div>
-        <div class="main-slider-item"><img src="{% static 'img/sliderimage3.jpg' %}" alt="Slider Image" /></div>
+        <div class="main-slider-item"><img src="{% static 'img/bookbanner5.jpg' %}" alt="Slider Image" /></div>
+        <div class="main-slider-item"><img src="{% static 'img/bookbanner6.jpg' %}" alt="Slider Image" /></div>
+        <div class="main-slider-item"><img src="{% static 'img/bookbanner3.jpg' %}" alt="Slider Image" /></div>
     </div>
 </div>
 <!-- Main Slider End -->
@@ -160,7 +160,7 @@
                         </div>
                     </div>
                     <div class="product-content">
-                        <div class="title"><a href="#">{{product.variant_name}}</a></div>
+                        <div class="title"><a href="#" style="font-size: smaller;">{{product.variant_name}}</a></div>
                         <div class="ratting">
                             {% for _ in product.rating|default:0|star_range  %}
                             <i class="fa fa-star"></i>
@@ -168,12 +168,12 @@
                         </div>
                         {% if offerprice %}
                                  {% if product.id in offerprice %}
-                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ offerprice|get_item:product.id |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
+                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ offerprice|get_item:product.id |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
                                  {% else %}
-                                 <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
                         {% endif %}
                         {% else %}
-                        <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                        <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
                         {% endif %}
                     </div>
                 </div>

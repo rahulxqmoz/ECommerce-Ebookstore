@@ -93,11 +93,14 @@ class Product_variant(models.Model):
     offer=models.ForeignKey(Offer,on_delete=models.SET_NULL,null=True)
     rating=models.IntegerField()
     edition = models.ForeignKey(Editions,on_delete=models.CASCADE,null=True)
+    qty_per_person=models.IntegerField(default=5)
 
     def offerprice(self):
         offerprice=0
         offerprice=int(self.product_price) - (int(self.product_price)  * int (self.offer.off_percent)/100)
         return offerprice
+    def __str__(self) -> str:
+        return self.variant_name
 
 
 class MultipleImages(models.Model):
@@ -113,5 +116,13 @@ class ProductReview(models.Model):
     rating = models.IntegerField(default=0)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey(Product_variant, on_delete=models.CASCADE)
+    added_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.product.variant_name    
 
 

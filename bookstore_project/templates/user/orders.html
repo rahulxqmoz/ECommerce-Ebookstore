@@ -104,7 +104,7 @@
                     <h1 class="text-danger m-5"> Order list is empty !</h1>
                 </div>
                 <div class="text-center">
-                    <img src="{% static 'img/empty.jpg' %}" alt="image" class="w-75">
+                    <img src="{% static 'img/cart.png' %}" alt="image" class="w-75">
                 </div>
     
                 {% endif %}
@@ -247,11 +247,13 @@
                       </div>
                     </div>
                     {% else %}
+                    {% if order.order_id.status == 'Order confirmed' %}
                     <p class="text-danger text-left m-4" data-bs-target="#exampleModalToggle-{{ order.id }}" type="button" data-bs-toggle="modal" class="text-left btn btn-danger">Cancel Order</p>
+                    {% endif %}
                     <div class="card mb-4 mt-3">
                       <div class="card-body">
                         <p><strong>Expected shipping delivery</strong></p>
-                        <p class="mb-0"> 29.10.2023 - 01.11.2023</p>
+                        <p class="mb-0"> 30.04.2024 - 05.05.2024</p>
                       </div>
                     </div>
                     {% endif %}

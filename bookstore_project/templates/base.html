@@ -28,6 +28,34 @@
 
         <!-- Template Stylesheet -->
         <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+        <style>
+            #search-suggestions-container {
+            position: absolute;
+            top: calc(100% + 5px); /* Position it just below the search input */
+            left: 0;
+            width: 100%;
+            background-color: #fff; /* Background color */
+            border: 1px solid #ccc; /* Border */
+            border-top: none; /* Remove top border */
+            border-radius: 0 0 5px 5px; /* Rounded corners at bottom */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Shadow */
+            z-index: 999; /* Ensure it's above other elements */
+            max-height: 200px; /* Limit maximum height for scrollability */
+            overflow-y: auto; /* Enable vertical scrolling if needed */
+        }
+        
+        #search-suggestions-container div {
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth hover effect */
+        }
+        
+        #search-suggestions-container div:hover {
+            background-color: #f4f4f4; /* Hover background color */
+        }
+        
+        </style>
     </head>
 
     <body>
@@ -43,11 +71,12 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-6 product-search">
                         <form action="{% url 'user_search' %}" method="post">
                             {% csrf_token %}
                         <div class="search">
-                            <input type="text" placeholder="Search" name="searchquery">
+                            <input type="text" placeholder="Search for books or authors" name="searchquery">
+                            <div id="search-suggestions-container"></div>
                             <button><i class="fa fa-search"></i></button>
                         </div>
                     </form>    
@@ -79,12 +108,19 @@
                                
                                 <a href="{% url 'view_cart' user.id %}"><i class="fa fa-cart-plus"></i></a>
                                 <span>({{ request.session.cart_item_count }})</span>
+                                <a href="{% url 'view_wishlist'  %}"> <i class="fa fa-heart"></i></a>
+                                <span>({{ request.session.wishlishcount }})</span>
+
                                 
                                 {% else %}
                                 <i class="fa fa-cart-plus"></i>
                                 <span>(0)</span>
+                                <i class="fa fa-heart"></i>
+                                <span>(0)</span>
                                 {% endif %}
                             </div>
+
+                            
                         </div>
                     </div>
                 </div>
@@ -250,5 +286,96 @@
         
         <!-- Template Javascript -->
         <script src="{% static 'js/main.js' %}"></script>
+
+
+
+        <script>
+            $(document).ready(function () {
+                $('.dropdown-item-sort').click(function (e) {
+                    e.preventDefault();
+                    var sortCriteria = $(this).data('sort');
+                    var url = '/browse_products/?sort_criteria=' + sortCriteria; 
+                    $('#sortForm input[name="sort_criteria"]').val(sortCriteria);
+                    $('#sortForm').attr('action', url);
+                    $('#sortForm').submit();
+        
+                    window.location.href = url;
+                });
+        
+                $('a').not('.dropdown-item').click(function(e) {
+                // Only prevent default behavior if it's not a dropdown item link
+                if (!$(this).hasClass('dropdown-item')) {
+                    e.preventDefault();
+                    var href = $(this).attr('href');
+                    window.location.href = href;
+                }
+            });
+            });
+        
+        
+        
+        
+            // Attach event listener to search input field
+            document.querySelector('.product-search input[name="searchquery"]').addEventListener('input', function() {
+        
+            var query = this.value;
+            if (query.length >= 2) { // Optionally, check if the query length is sufficient
+                fetchSuggestions(query);
+            }
+        });
+        
+        // Function to fetch search suggestions via AJAX
+        function fetchSuggestions(query) {
+            fetch('/search_suggestions/?query=' + query)
+                .then(response => response.json())
+                .then(data => {
+                    // Update the search suggestion dropdown with the received suggestions
+                    updateSuggestionsDropdown(data.suggestions);
+                })
+                .catch(error => {
+                    console.error('Error fetching search suggestions:', error);
+                });
+        }
+        
+        // Function to update the search suggestion dropdown
+        function updateSuggestionsDropdown(suggestions) {
+            var container = document.getElementById('search-suggestions-container');
+            // Clear existing suggestions
+            container.innerHTML = '';
+            // Populate container with new suggestions
+            suggestions.forEach(suggestion => {
+                var suggestionElement = document.createElement('div');
+                suggestionElement.textContent = suggestion;
+                suggestionElement.classList.add('suggestion-item'); // Add a class for styling
+                suggestionElement.addEventListener('click', function() {
+                    // When suggestion is clicked, populate the input field with the suggestion text
+                    var inputField = document.querySelector('input[name="searchquery"]');
+                    inputField.value = suggestion;
+                    // Trigger the search
+                    triggerSearch();
+                });
+                container.appendChild(suggestionElement);
+            });
+        }
+        // Event listener to handle clicks on suggestion items
+        document.addEventListener('click', function(event) {
+            if (event.target.matches('.suggestion-item')) {
+                var suggestion = event.target.textContent;
+                var inputField = document.querySelector('.product-search input[name="searchquery"]');
+                inputField.value = suggestion;
+                triggerSearch();
+            }
+        });
+        
+        
+        function triggerSearch() {
+            var form = document.querySelector('.product-search form');
+            form.submit();
+        }
+        
+        </script>
+        
+        
+
     </body>
 </html>
