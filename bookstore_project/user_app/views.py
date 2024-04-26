@@ -1,3 +1,4 @@
+from decimal import Decimal
 import random
 import uuid
 from django.http import HttpResponse, JsonResponse
@@ -5,12 +6,13 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.db.models import Q,Count
 from django.contrib.auth.hashers import check_password
-
+from django.contrib.sites.shortcuts import get_current_site
 
 from django.contrib.auth.decorators import login_required
 # Create your views here.
 from django.conf import settings
 from django.shortcuts import redirect, render
+import razorpay
 from order.models import *
 from cart.models import CartItem
 from user_app.models import CustomUser,Forgotpassword
@@ -22,6 +24,12 @@ from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.hashers import make_password
 from buyproducts.models import *
 # Create your views here.
+
+
+def generate_referral_code():
+    code = str(uuid.uuid4()).replace('-', '')[:12]
+    return code
+
 
 def index(request):
     try:
@@ -93,12 +101,27 @@ def user_sign_up(request):
 
                     user = CustomUser.objects.create(first_name=user_data['first_name'],password=hashed_password, phone=user_data['phonenumber'],last_name=user_data['last_name'],email=user_data['email'])    
                     otp = get_random_string(length=6, allowed_chars='1234567890')
+                    code = generate_referral_code()
 
                     user.otp=otp
-                    
+                    user.referral_code=code
 
                     
                     send_otp_email(user_data['email'],otp)
+                    try:
+                        if user_data['referral_code']:
+                            ref_user = CustomUser.objects.filter(referral_code=user_data['referral_code']).first()
+                            if ref_user:
+                                referred_user = CustomUser.objects.get(id=ref_user.id)
+                                referred_user.wallet = 200
+                                user.wallet = 50
+                                user.referred_by = referred_user.email
+                                referred_user.save()
+                                messages.success(request, "Referral code verified")
+                            else:
+                                messages.error(request, "Invalid Referral code.")
+                    except Exception as e:
+                        print(e)
                     user.save()
                 
                     return redirect('otp_verification',user_id=user.id)
@@ -106,13 +129,11 @@ def user_sign_up(request):
                     messages.error(request,"Could not save user")
     except Exception as e:
         print(e)     
-        messages.error(request,"Unexpected error occured!!")        
+        messages.error(request,"Unexpected error occured!!")     
 
-
-
-
-        
     return render(request,'user/signup.html')
+
+
 
 @cache_control(no_store=True, no_cache=True)
 def otp_verification(request,user_id):
@@ -510,7 +531,19 @@ def user_profile(request):
         orders = Order.objects.filter(user=user).order_by('-id')
         category=Category.objects.all().order_by('id')
         context={}
+        callback_url='http://'+ str(get_current_site(request))+"/add_wallet/"
         if request.method=="POST":
+            amount=request.POST.get('addwallet')
+            if amount is not None: 
+                # client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
+                # data = { "amount": int(amount*100), "currency": "INR", "receipt": "order_rcptid_11" ,'payment_capture':0}
+                # payment = client.order.create(data=data)
+                # print(amount)
+                #payment=client.order.create({'amount':int(float(amount)) *100,'currency':'INR','payment_capture':0})
+                #order_id=payment[id]
+                
+                context = {'amount': float(amount)}  
+                return render(request,'user/procced_to_pay.html',context)
             first_name=request.POST.get('first_name')
             last_name=request.POST.get('last_name')
             phone=request.POST.get('phone')
@@ -526,9 +559,11 @@ def user_profile(request):
             user.save()
             messages.success(request,"User Updated Successfully")
             return redirect('user_profile')
-        context={'user':user,'address':address,'orders':orders,'category':category}
-        return render(request,'user/user_profile.html',context)
-
+        payment=''
+        order_id=''
+        #callback_url='http://'+ str(get_current_site(request))+"/add_wallet/"
+      
+       
     except Exception as e:
         print(e)
         messages.error(request,"user not found!!")    
@@ -745,4 +780,60 @@ def order_summary(request,id):
         return redirect('user_profile')
 
     return render(request,'user/orders.html',context)     
-        
+
+def add_wallet(request):
+    try:
+        def verify_signature(response_data):
+            client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
+            return client.utility.verify_payment_signature(response_data)
+
+        if "razorpay_signature" in request.POST:
+            payment_id = request.POST.get("razorpay_payment_id", "")
+            amount =request.POST.get("amount", "") 
+            
+            if not verify_signature(request.POST):
+               if payment_id:
+                    user = CustomUser.objects.get(id=request.user.id)
+                    user.wallet+=amount
+                    user.save()
+                    wallet_acc=WalletBook()
+                    wallet_acc.customer=user
+                    wallet_acc.amount=amount
+                    wallet_acc.description="Added Money to wallet"
+                    wallet_acc.increment=True
+                    wallet_acc.save()
+                    messages.success(request,f"Amound Rs.{amount} added to the wallet!!")
+                    return redirect('user_profile')
+            else:
+                messages.error(request,"Amount Credit failed!!")
+                return redirect('user_profile')   
+                   
+    except Exception as e:
+        print(e)        
+
+
+def proceed_to_pay(request):
+    user = request.user
+    amount_paise = Decimal('0')
+
+    # Check if the amount is passed as a query parameter
+    if 'amount' in request.GET:
+        amount=request.GET.get('amount')
+        user.wallet += Decimal(amount)
+        user.save()
+        wallet_acc = WalletBook()
+        wallet_acc.customer = user
+        wallet_acc.amount = amount
+        wallet_acc.description = "Added Money to wallet"
+        wallet_acc.increment = True
+        wallet_acc.save()
+        messages.success(request, f"Amound Rs.{amount} added to the wallet!!")
+        return redirect('proceed_to_pay')
+
+
+
+    context = {
+        'user': user,
+        'amount_paise': amount_paise,  # Pass the amount in paise to the template
+    }
+    return render(request,'user/procced_to_pay.html',context)

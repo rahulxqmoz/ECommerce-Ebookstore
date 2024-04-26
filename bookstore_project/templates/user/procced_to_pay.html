@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load custom_tags %}
+
+{% block content %}
+
+
+<br><br>
+<div class="text-center">
+    <span class="text-danger fw-5">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </span>
+</div>
+
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title text-center mb-4">Wallet Balance</h3>
+            <div class="text-center mb-4">
+              <p class="text-muted"><i class="fa-solid fa-indian-rupee-sign"></i>{{user.wallet}}</p> <!-- Replace with actual balance value -->
+            </div>
+            <form>
+              <div class="form-group">
+                <label for="addMoney">Add Money</label>
+                <input type="number" class="form-control" id="addMoney" name="amount" placeholder="Enter Amount to Add">
+              </div>
+              <div class="text-center">
+                <button type="submit" id="money" class="btn btn-primary">Add Money</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<br>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+// Get the amount in paise from the Django template context
+ // Parse the amount as integer
+
+var options = {
+    "key": "rzp_test_k09K3nNxIT2CXG", // Enter the Key ID generated from the Dashboard
+    "amount": "{% widthratio amount_paise 1 100%}", // Use the amount in paise
+    "currency": "INR",
+    "name": "Ecommerce",
+    "description": "Test Transaction",
+    "image": "https://example.com/your_logo",
+    "order_id": "{{ razorpay_order_id }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+    "handler": function (response){
+        
+        window.location.href = "{% url 'proceed_to_pay' %}?amount=" + options.amount / 100; // Use the amount directly
+    },
+    "prefill": {
+        "name": "Gaurav Kumar",
+        "email": "gaurav.kumar@example.com",
+        "contact": "9000090000"
+    },
+    "notes": {
+        "address": "Razorpay Corporate Office"
+    },
+    "theme": {
+        "color": "#3399cc"
+    }
+};
+
+document.getElementById('money').onclick = function(e){
+    // Get the amount input value
+    var inputAmount = document.getElementById('addMoney').value;
+    if (inputAmount) {
+        // Update the amount option
+        options.amount = parseInt(inputAmount) * 100; // Convert amount to paise
+        var rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function (response){
+            alert(response.error.code);
+            alert(response.error.description);
+            alert(response.error.source);
+            alert(response.error.step);
+            alert(response.error.reason);
+            alert(response.error.metadata.order_id);
+            alert(response.error.metadata.payment_id);
+        });
+        rzp1.open();
+        e.preventDefault();
+    }
+}
+
+</script>
+
+
+{% endblock %}

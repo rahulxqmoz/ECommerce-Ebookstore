@@ -26,6 +26,10 @@ SECRET_KEY = 'django-insecure-&u(h6zgtatsk0h(lit^chnw5m8d1o^v_-$8&uv0xg@n9&z7)em
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = []
 
@@ -163,3 +167,8 @@ EMAIL_USE_TLS = True  # Enable TLS encryption
 EMAIL_HOST_USER = 'rahulraju5555u@gmail.com'  # Your email address or username
 EMAIL_HOST_PASSWORD = 'lscv xutl dbjf rngj'  # Your email password or app-specific password
 
+KEY = 'rzp_test_k09K3nNxIT2CXG'
+SECRET = 'jtKGhIt9YV0lgkH1AgjKPPt5'
+
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"

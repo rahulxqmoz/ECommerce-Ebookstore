@@ -79,6 +79,11 @@
                             <button id="applyCoupon">Apply Code</button>
                         </div>
                         <br>
+                       
+                        <button id="couponremove" class="btn btn-primary">Remove Coupon</button>
+                        
+                        <br>
+                        <br>
                         <div class="coupon">
                             <label for="offertName" class="form-label">Available Coupons</label>
                             <div style="overflow-y: scroll; max-height: 200px;"> <!-- Add a scrollbar to the list -->
@@ -172,7 +177,14 @@
                             $('#discount').text(response.discount);
                             $('#coupon_offer').text(response.couponoffer)
                             $('#tax').text(response.tax)
-                            $('#couponcode').text(response.couponcode)
+                            $('#couponcode').text(response.couponcode)    
+                            console.log(response.alreadycouponexists)  
+                            if (response.alreadycouponexists) {
+                            $('#couponremove').show(); // Show the button
+                            } 
+                            else {
+                            $('#couponremove').hide(); // Hide the button
+                            }                       
                             $('#error-message').text('');
                             $('#quantity-'+itemId).closest('.qty-cart').find('.quantity-input,.quantity-plus' ).prop('disabled', false);
                         }
@@ -247,6 +259,31 @@
                 }
                 }
             });
+
+
+            $(document).ready(function() {
+            // Function to remove coupon from the cart
+            $('#couponremove').click(function() {
+                // Perform AJAX request to remove coupon from the cart
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'remove_coupon' %}",
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        // Handle success response, such as updating the UI
+                        // For example, you can reload the page or update specific elements
+                        location.reload(); // Reload the page to reflect the changes
+                    },
+                    error: function(xhr, status, error) {
+                        // Handle error, if any
+                        console.error(error); // Log the error to the console
+                    }
+                });
+            });
+        });
+
         </script>
 
         

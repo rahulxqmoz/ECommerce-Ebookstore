@@ -6,13 +6,15 @@ from user_app.models import CustomUser,UserAddress
 from buyproducts.models import Product_variant
 from . models import Cart,CartItem, Coupon
 import uuid
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum,F,Q
 import datetime
 from order.models import Payments,OrderProduct
+import razorpay
+from django.conf import settings
 # Create your views here.
 
 
@@ -26,7 +28,7 @@ def add_to_cart(request,id):
            
            product=Product_variant.objects.get(id=id)
 
-           if product.stock < 0:
+           if product.stock <= 0:
                messages.error(request,'This book is out of stock!!!')
                return redirect('product_detail',id=id)
 
@@ -186,7 +188,9 @@ def update_cart_quantity(request):
             user_id = CustomUser.objects.get(id=request.user.id)
             cart_item = CartItem.objects.filter(customer=user_id).first() 
             cart_obj=Cart.objects.get(id=cart_item.cart.id)
+            alreadycouponexists=False
             if cart_obj.coupon:
+                alreadycouponexists=True
                 couponcode=f'Applied coupon code {cart_obj.coupon.coupon_code} successfully'
                 if cart_obj.coupon.min_amount > total:
                     return JsonResponse({'error': f'Amount should be greater than {cart_obj.coupon.min_amount}'})
@@ -213,7 +217,9 @@ def update_cart_quantity(request):
                     discount_amount = get_coupon.max_discount
                 
                 cart_obj.save()
+                
                 couponcode=f'Applied coupon code {get_coupon.coupon_code} successfully'
+                alreadycouponexists=True
 
             discount = total_sum['total_sum'] - total
             shipping=0
@@ -233,7 +239,7 @@ def update_cart_quantity(request):
             cart_obj.tax=tax
             cart_obj.save()
 
-            return JsonResponse({'sub_total': sub_total, 'grand_total': total,'subtotaloffer':total_sum['total_sum'],'discount':discount,'shipping':shipping,'couponoffer':discount_amount,'tax':tax,'couponcode':couponcode})
+            return JsonResponse({'sub_total': sub_total, 'grand_total': total,'subtotaloffer':total_sum['total_sum'],'discount':discount,'shipping':shipping,'couponoffer':discount_amount,'tax':tax,'couponcode':couponcode,'alreadycouponexists':alreadycouponexists})
     except Exception as e:
         print(e)
         messages.error(request,'Page exception found!!')
@@ -269,6 +275,16 @@ def place_order(request,id):
         if 'user' not in request.session:
             messages.error(request,'You need to login before enetring to cart!')
             return redirect('user_login')
+        add_id=id
+        payments={}
+        order_id=''
+        order=''
+        callback= "http://" + "127.0.0.1:8000" + "/cart/place_order/{}".format(add_id)
+        payment_method = request.GET.get('payment_method')
+        razorpay_id=request.GET.get('razor_id')
+
+        
+
         useraddress=UserAddress.objects.get(id=id)
         user=CustomUser.objects.get(id=request.user.id)
         cartitem=CartItem.objects.filter(customer=user)
@@ -307,74 +323,162 @@ def place_order(request,id):
         if  withoffer<1000:
             shipping_cost=99
             withoffer=withoffer+shipping_cost  
-          
-        if request.method=="POST":
-            my_order = Order()
-            my_order.user = user
-            my_order.address = useraddress
-            my_order.subtotal = withoutoffer
-            my_order.order_total = withoffer  # product's total amount.
-            my_order.discount_amount = discount_amount
-            my_order.tax = tax
-            my_order.is_ordered = True
-            if coupon_obj:
-                my_order.coupon = coupon_obj
-            else:
-                my_order.coupon=None    
-            my_order.coupon_amount=coupon_discount
-            my_order.shipping_cost=shipping_cost
-            paymentMethod=request.POST.get('payment')  
-            my_order.save()
-            yr = int(datetime.date.today().strftime('%Y'))
-            dt = int(datetime.date.today().strftime('%d'))
-            mt = int(datetime.date.today().strftime('%m'))
-            d = datetime.date(yr, mt, dt)
-            current_date = d.strftime("%Y%m%d")
-            order_id = current_date + str(my_order.id)  # creating order id
-            my_order.order_id = order_id
-
-            my_order.save()
-
-            # creating object for payment.
-            payment = Payments.objects.create(
-                user=user,
-                total_amount=withoffer,
-                is_paid=False,
-            ) 
-
-             # creating order items
-            for item in cartitem:
-                product_obj = Product_variant.objects.get(id=item.product.id)
-                order_item = OrderProduct.objects.create(
-                    customer=user,
-                    order_id=my_order,
-                    payment_id=payment.id,
-                    product=product_obj,
-                    quantity=item.quantity,
-                    product_price=item.product.product_price,
-                    ordered=True,
-                )
-                product_obj.stock = product_obj.stock - item.quantity
-                product_obj.save()
-                item.delete()
-            try:
-                cartitem.delete()
-            except:
-                pass
-            if paymentMethod == "cod":
-                payment.payment_method = 'Cashon Delivery'  # set current payment method
-                payment_id = order_id + "COD"
-                payment.payment_id = payment_id
-                payment.save()
-                my_order.payment = payment
+       
+       
+        if payment_method == 'razorpay':
+                print("Entered to method")
+                my_order = Order()
+                my_order.user = user
+                my_order.address = useraddress
+                my_order.subtotal = withoutoffer
+                my_order.order_total = withoffer  # product's total amount.
+                my_order.discount_amount = discount_amount
+                my_order.tax = tax
+                my_order.is_ordered = True
+                if coupon_obj:
+                    my_order.coupon = coupon_obj
+                else:
+                    my_order.coupon=None    
+                my_order.coupon_amount=coupon_discount
+                my_order.shipping_cost=shipping_cost
+                paymentMethod=request.POST.get('payment')  
                 my_order.save()
-                user_id=CustomUser.objects.get(id=request.user.id)
-                cartitem=CartItem.objects.filter(customer=user_id).count()
-                request.session['cart_item_count'] = cartitem
-                return render(request, 'products/confirm_order.html')
+                yr = int(datetime.date.today().strftime('%Y'))
+                dt = int(datetime.date.today().strftime('%d'))
+                mt = int(datetime.date.today().strftime('%m'))
+                d = datetime.date(yr, mt, dt)
+                current_date = d.strftime("%Y%m%d")
+                order_id = current_date + str(my_order.id)  # creating order id
+                my_order.order_id = order_id
 
+                my_order.save()
+
+                # creating object for payment.
+                payment = Payments.objects.create(
+                    user=user,
+                    total_amount=withoffer,
+                    is_paid=False,
+                ) 
+
+                # creating order items
+                for item in cartitem:
+                    product_obj = Product_variant.objects.get(id=item.product.id)
+                    order_item = OrderProduct.objects.create(
+                        customer=user,
+                        order_id=my_order,
+                        payment_id=payment.id,
+                        product=product_obj,
+                        quantity=item.quantity,
+                        product_price=item.product.product_price,
+                        ordered=True,
+                    )
+                    product_obj.stock = product_obj.stock - item.quantity
+                    product_obj.save()
+                    item.delete()
+                try:
+                    cartitem.delete()
+                except:
+                    pass
+                if razorpay_id:
+                    payment.payment_method = 'Razor Pay'  # set current payment method
+                    payment.payment_id = razorpay_id  # check this payment_id
+                    payment.is_paid = True
+                    payment.save()
+                    my_order.payment = payment
+                    my_order.save()
+                    user_id=CustomUser.objects.get(id=request.user.id)
+                    cartitem=CartItem.objects.filter(customer=user_id).count()
+                    request.session['cart_item_count'] = cartitem
+                    return render(request, 'products/confirm_order.html')
+        if request.method=="POST":
+            paymentMethod=request.POST.get('payment')
+            if paymentMethod is not None and paymentMethod.strip() != '':
+               
+               
                 
-        
+                my_order = Order()
+                my_order.user = user
+                my_order.address = useraddress
+                my_order.subtotal = withoutoffer
+                my_order.order_total = withoffer  # product's total amount.
+                my_order.discount_amount = discount_amount
+                my_order.tax = tax
+                my_order.is_ordered = True
+                if coupon_obj:
+                    my_order.coupon = coupon_obj
+                else:
+                    my_order.coupon=None    
+                my_order.coupon_amount=coupon_discount
+                my_order.shipping_cost=shipping_cost
+                paymentMethod=request.POST.get('payment')  
+                my_order.save()
+                yr = int(datetime.date.today().strftime('%Y'))
+                dt = int(datetime.date.today().strftime('%d'))
+                mt = int(datetime.date.today().strftime('%m'))
+                d = datetime.date(yr, mt, dt)
+                current_date = d.strftime("%Y%m%d")
+                order_id = current_date + str(my_order.id)  # creating order id
+                my_order.order_id = order_id
+
+                my_order.save()
+
+                # creating object for payment.
+                payment = Payments.objects.create(
+                    user=user,
+                    total_amount=withoffer,
+                    is_paid=False,
+                ) 
+
+                # creating order items
+                for item in cartitem:
+                    product_obj = Product_variant.objects.get(id=item.product.id)
+                    order_item = OrderProduct.objects.create(
+                        customer=user,
+                        order_id=my_order,
+                        payment_id=payment.id,
+                        product=product_obj,
+                        quantity=item.quantity,
+                        product_price=item.product.product_price,
+                        ordered=True,
+                    )
+                    product_obj.stock = product_obj.stock - item.quantity
+                    product_obj.save()
+                    item.delete()
+                try:
+                    cartitem.delete()
+                except:
+                    pass
+                if paymentMethod == "cod":
+                    payment.payment_method = 'Cashon Delivery'  # set current payment method
+                    payment_id = order_id + "COD"
+                    payment.payment_id = payment_id
+                    payment.save()
+                    my_order.payment = payment
+                    my_order.save()
+                    user_id=CustomUser.objects.get(id=request.user.id)
+                    cartitem=CartItem.objects.filter(customer=user_id).count()
+                    request.session['cart_item_count'] = cartitem
+                    return render(request, 'products/confirm_order.html')
+                if paymentMethod == "razorpay":
+                    print('entered razor pay')
+                    # grand_total=int(withoffer)
+                    # client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
+                    # payments=client.order.create({'amount':grand_total*100,'currency':'INR','payment_capture':0})
+                    # order_id = payments['id']
+                    # payment.payment_method = 'Razor Pay'  # set current payment method
+                    # payment.payment_id = order_id  # check this payment_id
+                    # payment.is_paid = False
+                    # payment.save()
+                    # my_order.payment = payment
+                    # my_order.save()
+                    # return render(request, 'products/confirm_order.html')
+            
+
+            else:
+                messages.error(request,'You to select a payment!!')
+                return redirect('place_order',id=id)        
+
+       
 
         context={'address':useraddress,
                  'cartitem':cartitem,
@@ -383,9 +487,73 @@ def place_order(request,id):
                  'discount_amount':discount_amount,
                  'coupon_amount':coupon_discount,
                  'tax':tax,
-                 'shipping':shipping_cost}
+                 'shipping':shipping_cost,
+                 'add_id':add_id,
+                 'payment':payments,
+                 'order_id':order_id,
+                 'orders':order,
+                 'callback_url':callback
+
+                 }
         
     except Exception as e:
         print(e)    
 
     return render(request,'products/place_order.html',context)
+
+
+def remove_coupon(request):
+    if request.method == 'POST' and request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        try:
+            # Remove the coupon from the cart
+            user_id = request.user.id
+            cart_item = CartItem.objects.filter(customer=user_id).first()
+            cart_obj = Cart.objects.get(id=cart_item.cart.id)
+            cart_obj.coupon = None
+            cart_obj.save()
+
+            # Return success response
+            return JsonResponse({'success': True})
+        except Exception as e:
+            # Return error response if any exception occurs
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        # Return error response for invalid requests
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+    
+
+def razorpay_gateway(request):
+    grand_total = request.GET.get('grand_total')
+    print("Grand Total:", grand_total)  
+    client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
+    print(client)
+    paymentrazor=client.order.create({'amount':int(float((grand_total))),'currency':'INR','payment_capture':1})
+    print(paymentrazor)
+    if grand_total:
+        
+        return HttpResponse(f'Payment processed for grand total: {grand_total}')
+    else:
+        return HttpResponse('Error: Grand total not provided')
+    
+
+@csrf_exempt
+def callback(request):
+    try:
+        def verify_signature(response_data):
+            client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
+            return client.utility.verify_payment_signature(response_data)
+
+        if "razorpay_signature" in request.POST:
+            payment_id = request.POST.get("razorpay_payment_id", "")
+            my_order_id = request.GET.get("order_id") 
+            order = Order.objects.get(id=my_order_id)
+            order.payment.payment_id = payment_id
+            order.save()
+            if not verify_signature(request.POST):
+                order.payment.is_paid =True 
+                order.save()
+                return render(request, "confirm_order.html")
+    except Exception as e:
+        print(e)        
+        
+

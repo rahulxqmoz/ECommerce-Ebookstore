@@ -46,6 +46,8 @@ class CustomUser(AbstractUser):
     otp = models.CharField(max_length=6, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
     wallet = models.DecimalField(default=0, decimal_places=2, max_digits=10)
+    referral_code = models.CharField(default="EbookStore", null=True, blank=True, max_length=12)
+    referred_by = models.CharField(max_length=250, null=True, blank=True)
 
    
     USERNAME_FIELD = 'email'
@@ -85,3 +87,13 @@ class UserAddress(models.Model):
 
     def __str__(self):
         return f"{self.user.email}"    
+
+class WalletBook(models.Model):
+    customer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    amount = models.CharField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    increment = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.customer.first_name}-{self.pk}'

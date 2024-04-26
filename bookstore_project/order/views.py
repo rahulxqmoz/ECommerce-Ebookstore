@@ -2,6 +2,7 @@ from django.shortcuts import render,redirect
 import pdb
 
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_control
 
 from buyproducts.models import Product_variant
 from order.models import OrderProduct,Order
@@ -39,5 +40,21 @@ def cancel_order(request,id):
         print(e)
     return redirect('order_summary',id=order_obj.id)
     
+@cache_control(no_cache=True, no_store=True)
+@login_required(login_url='user_login')
+def order_return(request, order_id):
+    order_item = OrderProduct.objects.get(id=order_id)
+    try:
+        if request.method == 'POST':
+            return_reason = request.POST.get('returnReason', None)
+            if return_reason:
+                order_item.return_reason = return_reason
+            order_item.return_request = True
+        order_item.save()
+        return redirect('order_summary',id=order_item.order_id.id)
+    except Exception as e:
+        print(e)
+
+    return redirect('order_summary',id=order_id)
 
    

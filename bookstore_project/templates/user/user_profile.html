@@ -36,6 +36,7 @@
                     <a class="nav-link" id="payment-nav" data-toggle="pill" href="#payment-tab" role="tab">Payment Method</a>
                     <a class="nav-link" id="address-nav" data-toggle="pill" href="#address-tab" role="tab">Address</a>
                     <a class="nav-link" id="account-nav" data-toggle="pill" href="#account-tab" role="tab">Account Details</a>
+                    <a class="nav-link" id="account-nav" data-toggle="pill" href="{% url 'proceed_to_pay' %}" role="tab">Wallet</a>
                     <a class="nav-link" href="{% url 'user_logout' %}">Logout</a>
                 </div>
             </div>
@@ -67,7 +68,7 @@
                                         <td>{{ forloop.counter }}</td>
                                         <td>{{order.order_id}}</td>
                                         <td>{{order.created}}</td>
-                                        <td>{{order.order_total}}</td>
+                                        <td><i class="fa-solid fa-indian-rupee-sign"></i> {{order.order_total}}</td>
                                         <td>{{order.status}}</td>
                                         <td><a href="{% url 'order_summary' order.id %}"><button>View</button></a></td>
                                     </tr>
@@ -160,6 +161,8 @@
                     </form>
                     {% endif %}
                     </div>
+
+                  
                 </div>
             </div>
         </div>
@@ -186,5 +189,7 @@
         }
     }
 </script>
+
+
 
 {% endblock %}
