@@ -166,7 +166,70 @@
   </div>
 {% endfor %}
 
+{% comment %} modal for order item  {% endcomment %}
+  
+{% for item in order_items %}
+  <!-- Modal -->
+  <div class="modal fade" id="retrunRequest-{{ item.id }}" tabindex="-1" aria-labelledby="returnModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel"> Order Item </h5>
+        </div>
+        <div class="modal-body">
+            <form action="#" method="post">
+                {% csrf_token %}
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title text-dark" id="returnModal">Request fo return </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <h4 class="text-center text-dark"> Reason for return </h4>
+                    <br>
+                    <p class="text-dark "> {{ item.return_reason }} </p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Reject</button>
+                    <button type="submit" class="btn btn-primary"> Accept </button>
+                  </div>
+                </div>
+              </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
 
+{% for item in order_items %}
+<!-- Modal -->
+<div class="modal fade" id="returnRequest-{{ item.id }}" tabindex="-1" aria-labelledby="returnModal" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+        <form action="{% url 'return_request' item.id %}" method="post">
+            {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title text-dark" id="returnModal">Request for return</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h4 class="text-center text-dark">Reason for return</h4>
+          <div class="form-group">
+            <textarea class="form-control" rows="4" readonly>{{ item.return_reason }}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Reject</button>
+          <button type="submit" class="btn btn-primary">Accept</button>
+        </div>
+        </form>
+      </div>
+  </div>
+</div>
+{% endfor %}
 
 
 

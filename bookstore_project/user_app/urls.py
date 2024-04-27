@@ -29,6 +29,6 @@ urlpatterns = [
     path('delete_address/<int:id>/', views.delete_address, name="delete_address"),
     path('order_summary/<int:id>/', views.order_summary, name="order_summary"),
     path('proceed_to_pay/', views.proceed_to_pay, name="proceed_to_pay"),
-    path('add_wallet/', views.add_wallet, name="add_wallet"),
+    path('view_wallet/', views.view_wallet, name="view_wallet"),
    
 ]

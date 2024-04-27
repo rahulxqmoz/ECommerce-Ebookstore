@@ -405,8 +405,18 @@ def browse_products(request):
                 
                 products =  Product_variant.objects.annotate(
                 buy_count=Count('orderproduct')
-                ).order_by('-buy_count')     
-                    
+                ).order_by('-buy_count') 
+            print(sort_criteria)    
+
+            try:     
+                category_obj= Category.objects.get(id=sort_criteria)
+                if category_obj:
+                    products=Product_variant.objects.filter(Q(is_active=True) & Q(category=category_obj)).order_by('-id')
+            except:
+                if(sort_criteria=='0'):
+                    products=Product_variant.objects.filter(Q(is_active=True) & Q(product__is_active=True)) 
+
+            
 
 
         context={
@@ -531,19 +541,7 @@ def user_profile(request):
         orders = Order.objects.filter(user=user).order_by('-id')
         category=Category.objects.all().order_by('id')
         context={}
-        callback_url='http://'+ str(get_current_site(request))+"/add_wallet/"
         if request.method=="POST":
-            amount=request.POST.get('addwallet')
-            if amount is not None: 
-                # client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
-                # data = { "amount": int(amount*100), "currency": "INR", "receipt": "order_rcptid_11" ,'payment_capture':0}
-                # payment = client.order.create(data=data)
-                # print(amount)
-                #payment=client.order.create({'amount':int(float(amount)) *100,'currency':'INR','payment_capture':0})
-                #order_id=payment[id]
-                
-                context = {'amount': float(amount)}  
-                return render(request,'user/procced_to_pay.html',context)
             first_name=request.POST.get('first_name')
             last_name=request.POST.get('last_name')
             phone=request.POST.get('phone')
@@ -559,15 +557,12 @@ def user_profile(request):
             user.save()
             messages.success(request,"User Updated Successfully")
             return redirect('user_profile')
-        payment=''
-        order_id=''
-        #callback_url='http://'+ str(get_current_site(request))+"/add_wallet/"
       
-       
+        context={'orders':orders,'address':address,'category':category}
     except Exception as e:
         print(e)
         messages.error(request,"user not found!!")    
-    return render(request,'user/user_profile.html')
+    return render(request,'user/user_profile.html',context)
 
 def change_email(request,id):
     try:
@@ -779,35 +774,24 @@ def order_summary(request,id):
         print(e)
         return redirect('user_profile')
 
-    return render(request,'user/orders.html',context)     
-
-def add_wallet(request):
+    return render(request,'user/orders.html',context)    
+ 
+@login_required(login_url='user_login')
+def view_wallet(request):
     try:
-        def verify_signature(response_data):
-            client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
-            return client.utility.verify_payment_signature(response_data)
-
-        if "razorpay_signature" in request.POST:
-            payment_id = request.POST.get("razorpay_payment_id", "")
-            amount =request.POST.get("amount", "") 
-            
-            if not verify_signature(request.POST):
-               if payment_id:
-                    user = CustomUser.objects.get(id=request.user.id)
-                    user.wallet+=amount
-                    user.save()
-                    wallet_acc=WalletBook()
-                    wallet_acc.customer=user
-                    wallet_acc.amount=amount
-                    wallet_acc.description="Added Money to wallet"
-                    wallet_acc.increment=True
-                    wallet_acc.save()
-                    messages.success(request,f"Amound Rs.{amount} added to the wallet!!")
-                    return redirect('user_profile')
-            else:
-                messages.error(request,"Amount Credit failed!!")
-                return redirect('user_profile')   
-                   
+        context = {}
+        if 'user' in request.session:
+            user = request.user
+            try:
+                reports = WalletBook.objects.filter(customer=user.id).order_by('-id')
+                context = {
+                    'reports': reports,
+                }
+                return render(request, "user/wallet_book.html", context)
+            except Exception as e:
+                print(e)
+                return redirect('user_profile')
+        return redirect('index')
     except Exception as e:
         print(e)        
 
@@ -818,17 +802,22 @@ def proceed_to_pay(request):
 
     # Check if the amount is passed as a query parameter
     if 'amount' in request.GET:
-        amount=request.GET.get('amount')
-        user.wallet += Decimal(amount)
-        user.save()
-        wallet_acc = WalletBook()
-        wallet_acc.customer = user
-        wallet_acc.amount = amount
-        wallet_acc.description = "Added Money to wallet"
-        wallet_acc.increment = True
-        wallet_acc.save()
-        messages.success(request, f"Amound Rs.{amount} added to the wallet!!")
-        return redirect('proceed_to_pay')
+        razorpay_id=request.GET.get('razor_id')
+        if razorpay_id:
+            amount=request.GET.get('amount')
+            user.wallet += Decimal(amount)
+            user.save()
+            wallet_acc = WalletBook()
+            wallet_acc.customer = user
+            wallet_acc.amount = amount
+            wallet_acc.description = "Added Money to wallet"
+            wallet_acc.increment = True
+            wallet_acc.save()
+            messages.success(request, f"Amount Rs.{amount} added to the wallet!!")
+            return redirect('proceed_to_pay')
+        else:
+            messages.error(request,"Payment request failed!check internet connection!")
+            return redirect('proceed_to_pay')
 
 
 

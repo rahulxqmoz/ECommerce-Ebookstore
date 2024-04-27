@@ -43,11 +43,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
     'admin_app',
     'user_app',
     'buyproducts',
     'cart',
     'order',
+    'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
 
 
 ]
@@ -77,6 +84,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
 
         'libraries':{
@@ -87,7 +95,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'bookstore_project.wsgi.application'
+AUTHENTICATION_BACKENDS = [
+    
+    'django.contrib.auth.backends.ModelBackend',
 
+   
+    'allauth.account.auth_backends.AuthenticationBackend',
+    
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -172,3 +187,32 @@ SECRET = 'jtKGhIt9YV0lgkH1AgjKPPt5'
 
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
+SITE_ID=1
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+SOCIALACCOUNT_QUERY_EMAIL =True
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}

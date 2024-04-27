@@ -38,7 +38,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractUser):
-    username = None
+    username =None
     email = models.EmailField(_('email address'), unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
@@ -48,10 +48,12 @@ class CustomUser(AbstractUser):
     wallet = models.DecimalField(default=0, decimal_places=2, max_digits=10)
     referral_code = models.CharField(default="EbookStore", null=True, blank=True, max_length=12)
     referred_by = models.CharField(max_length=250, null=True, blank=True)
+    
 
    
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['phone']
+    
 
     objects = CustomUserManager()
 

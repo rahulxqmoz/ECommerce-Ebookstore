@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load custom_tags %}
+
+
+{% block content %}
+
+<div class="breadcrumb-wrap">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'user_profile' %}">User Profile</a></li>
+            <li class="breadcrumb-item active"><a href="#">Wallet Book</a></li>
+            
+        </ul>
+    </div>
+</div>
+<br><br>
+<div class="row justify-content-center">
+            
+          
+   
+            <div class="col-lg-8">
+                <h3 class="text-center mb-4">Account Statement</h3>
+            <table class="table table-hover text-nowrap">
+            <thead>
+                <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if reports %}
+            {% for i in reports %}
+                <tr>
+                <td> {{ i.created }} </td>
+                <td> {{ i.description }} </td>
+                {% if i.increment %}
+                    <td><span class="text-success"> <i class="fas fa-caret-up me-1"></i><span> {{ i.amount }} </span></span></td>
+                {% else %}
+                    <td><span class="text-danger"> <i class="fas fa-caret-down me-1"></i><span> {{ i.amount }} </span></span></td>
+                {% endif %}
+                </tr>
+            {% endfor %}
+            {% endif %}
+            </tbody>
+            </table>
+            </div>
+    
+</div>
+{% endblock %}

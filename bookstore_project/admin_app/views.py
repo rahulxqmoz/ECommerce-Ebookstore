@@ -995,3 +995,60 @@ def admin_order_update(request,id):
         print(e)
     
     return render(request,'admin/admin_order_update.html')
+
+@cache_control(no_cache=True, no_store=True)
+@staff_member_required(login_url='admin_login')
+def return_request(request, id):
+    try:
+
+        order_item = OrderProduct.objects.get(id=id)
+        variant = order_item.product
+        order = order_item.order_id
+        order_id = order.id
+       
+        user = order.user
+        shipping_cost=0
+        deduct_discount=0
+        tax=0
+        coupon=0
+        count =OrderProduct.objects.filter(order_id=order).count()
+        
+        if order.shipping_cost>0:
+            if count < order.shipping_cost:
+                shipping_cost=order.shipping_cost/count
+
+       
+        if order.coupon_amount:    
+            if count<order.coupon_amount:      
+                coupon = order.coupon_amount/count
+
+
+        if order.tax:
+            if count<order.tax:      
+                tax = order.tax/count
+        if request.method == 'POST':
+            order_item.is_returned = True
+            variant.stock += order_item.quantity
+            amount = int(variant.offerprice()) * order_item.quantity
+            if coupon>0:
+                amount=amount-coupon
+            if tax>0:
+                amount=amount+tax
+
+            refund_amount = (float(amount) + float(shipping_cost)) # calculating refund amount.
+           
+            user.wallet = float(user.wallet) + float(refund_amount)
+            wallet_acc = WalletBook()
+            wallet_acc.customer = user
+            wallet_acc.amount = refund_amount
+            wallet_acc.description = "Refund Credited for Product Return"
+            wallet_acc.increment = True
+            wallet_acc.save()
+            order_item.save()
+            variant.save()
+            user.save()
+            order.save()
+            return redirect('admin_order_update', order_id)
+    except Exception as e:
+        print(e)
+        return redirect('admin_order')

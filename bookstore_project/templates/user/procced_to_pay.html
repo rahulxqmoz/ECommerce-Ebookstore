@@ -1,13 +1,22 @@
-{% extends 'base.html' %}
+{% extends 'user/user_profile.html' %}
 
 {% load static %}
 
 {% load custom_tags %}
 
 {% block content %}
+<div class="breadcrumb-wrap">
+  <div class="container">
+      <ul class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'user_profile' %}">User Profile</a></li>
+          <li class="breadcrumb-item active"><a href="#">Wallet</a></li>
+          
+      </ul>
+  </div>
+</div>
 
-
-<br><br>
+<br>
 <div class="text-center">
     <span class="text-danger fw-5">
         {% for message in messages %}
@@ -19,25 +28,31 @@
 
 <div class="container mt-5">
     <div class="row justify-content-center">
+     
       <div class="col-md-6">
         <div class="card">
           <div class="card-body">
             <h3 class="card-title text-center mb-4">Wallet Balance</h3>
             <div class="text-center mb-4">
-              <p class="text-muted"><i class="fa-solid fa-indian-rupee-sign"></i>{{user.wallet}}</p> <!-- Replace with actual balance value -->
+              <p class="text-green" style="font-size:xx-large;font-weight: bold;"><i class="fa-solid fa-indian-rupee-sign"></i>{{user.wallet}}</p> <!-- Replace with actual balance value -->
             </div>
             <form>
               <div class="form-group">
                 <label for="addMoney">Add Money</label>
-                <input type="number" class="form-control" id="addMoney" name="amount" placeholder="Enter Amount to Add">
+                <input type="number" class="form-control" id="addMoney" name="amount" placeholder="Enter Amount to Add" required>
               </div>
               <div class="text-center">
                 <button type="submit" id="money" class="btn btn-primary">Add Money</button>
               </div>
+              
             </form>
+            <div class="text-center mt-3">
+             <a href="{% url 'view_wallet' %}"> <button type="submit" id="acc_stat" class="btn btn-primary">Account Statement</button></a>
+          </div>
           </div>
         </div>
       </div>
+      
     </div>
   </div>
 
@@ -57,8 +72,10 @@ var options = {
     "image": "https://example.com/your_logo",
     "order_id": "{{ razorpay_order_id }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
     "handler": function (response){
-        
-        window.location.href = "{% url 'proceed_to_pay' %}?amount=" + options.amount / 100; // Use the amount directly
+      var razor_id = response.razorpay_payment_id;
+      var amount = options.amount / 100; // Calculate the amount
+      var url = "{% url 'proceed_to_pay' %}?amount=" + amount + "&razor_id=" + razor_id; // Concatenate the razor_id to the URL
+      window.location.href = url; // Use the amount directly
     },
     "prefill": {
         "name": "Gaurav Kumar",

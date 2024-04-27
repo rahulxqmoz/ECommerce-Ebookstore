@@ -114,6 +114,14 @@
                         </div>
                     </div>
                     {% endfor %}
+
+                    {% else %}
+                    <div class="col-lg-12">
+                        <div class="alert alert-info" role="alert">
+                            <strong>No products found!</strong> Unfortunately, there are no products matching your criteria.
+                        </div>
+                    </div>
+
                      {% endif %}
                    
 
@@ -142,9 +150,11 @@
                 <div class="sidebar-widget category">
                     <h2 class="title">Category</h2>
                     <ul>
+                        <li><a href="#" class="dropdown-item dropdown-item-sort" data-sort="0">All</a></li>
                         {% if category %}
                         {% for cat in category %}
-                        <li><a href="{% url 'category_wise' cat.id %}">{{cat.category_name}}</a><span>({{ cat.product_variant_set.count }})</span></li>
+                       
+                        <li><a href="#" class="dropdown-item dropdown-item-sort" data-sort="{{cat.id}}" >{{cat.category_name}}</a></li>
                         {% endfor %}
                         {% endif %}
                     </ul>

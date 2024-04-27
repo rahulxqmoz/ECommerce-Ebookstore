@@ -50,5 +50,6 @@ urlpatterns = [
 
     path('admin_order/', views.admin_order,name='admin_order'),
     path('admin_order_update/<int:id>', views.admin_order_update,name='admin_order_update'),
+    path('return_request/<int:id>', views.return_request,name='return_request'),
     
 ]
