@@ -1,5 +1,7 @@
-from datetime import datetime
+import calendar
+from datetime import datetime, timedelta
 import os
+from calendar import month_name
 import uuid
 from django.shortcuts import get_object_or_404, render,redirect
 from django.http import HttpResponse
@@ -12,7 +14,10 @@ from order.models import Order, OrderProduct
 from cart.models import Coupon
 from user_app.models import CustomUser
 from buyproducts.models import *
-
+from django.db.models import Sum,Count,Q,F
+from django.utils import timezone
+from django.db.models.functions import ExtractYear,ExtractMonth
+from django.db.models.functions import Coalesce
 # Create your views here.
 
 
@@ -49,7 +54,162 @@ def admin_login(request):
 @cache_control(no_cache=True, no_store=True) 
 @staff_member_required(login_url="admin_login")
 def admin_dashboard(request):
-    return render(request,'admin/admin_dashboard.html')
+    context={}
+    orders=[0]*12
+    try:
+        orders = Order.objects.all().order_by('-id')
+        order_count = orders.count()
+        order_total = Order.objects.aggregate(total=Sum('order_total'))['total']
+        today = date.today()
+        today_count = Order.objects.filter(created__date=today).count()
+        today_revenue = Order.objects.filter(created__date=today).aggregate(total=Sum('order_total'))['total']
+          
+        # ----------------- Date filter ------------------------------
+
+        if request.method == 'POST':
+            try:
+                date_from = request.POST.get('startDate')
+                date_to = request.POST.get('endDate')
+
+                date_format = '%Y-%m-%d'
+                
+                date_from = datetime.strptime(date_from, date_format)
+                date_to = datetime.strptime(date_to, date_format)
+
+                # Adjust end date to end of the day (23:59:59)
+                date_to += timedelta(days=1)  # Move to the next day
+                date_to -= timedelta(seconds=1)  # Go back one second to reach the end of the selected day
+
+                # Filter orders within the specified range
+                orders = Order.objects.filter(created__range=(date_from, date_to))
+            except:
+                pass
+        # weekly sales data
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        weekly_count = Order.objects.filter(created__date__range=[week_start, week_end]).count()
+        weekly_revenue = Order.objects.filter(created__date__range=[week_start, week_end]).aggregate(total=Sum('order_total'))['total']
+
+        # Monthly sales data
+        month_start = today.replace(day=1)
+        month_end = month_start.replace(month=month_start.month % 12 + 1) - timedelta(days=1)
+        monthly_count = Order.objects.filter(created__date__range=[month_start, month_end]).count()
+        monthly_revenue = Order.objects.filter(created__date__range=[month_start, month_end]).aggregate(total=Sum('order_total'))['total']
+
+        # Get the current year
+        current_year = today.year
+
+        # Get the start and end dates of the current year
+        year_start = datetime(current_year, 1, 1)
+        year_end = datetime(current_year, 12, 31)
+
+        # Get the total sales count for the current year
+        current_yearly_sales_count = Order.objects.filter(created__date__range=[year_start, year_end]).count()
+
+        # Get the total sales revenue for the current year
+        current_yearly_sales_revenue = Order.objects.filter(created__date__range=[year_start, year_end]).aggregate(total=Sum('order_total'))['total']
+
+        # ------------------ Date filter end -----------------
+
+        total_discount = Order.objects.aggregate(
+        total_discount=Sum('discount_amount') + Sum('coupon_amount') + Sum('category_amount')
+        )['total_discount']
+
+        
+        common_discount = total_discount if total_discount else 0
+        month_names = [calendar.month_name[i] for i in range(1, 13)]
+
+        yearly_sales = (
+            Order.objects
+            .annotate(year=ExtractYear('created'))
+            .values('year')
+            .annotate(year_total=Sum('order_total'))
+            .order_by('year')
+        )
+
+        # calculate yearly orders
+
+        yearly_orders = (
+            Order.objects
+            .annotate(year=ExtractYear('created'))
+            .values('year')
+            .annotate(total_orders=Count('id'))
+            .order_by('year')
+        )
+
+       # Calculate monthly sales
+        monthly_sales = (
+            Order.objects
+            .annotate(month=ExtractMonth('created'))  # Extract the month from the created field
+            .values('month')  # Group by month
+            .annotate(month_total=Sum('order_total'))  # Calculate total sales for each month
+            .order_by('month')  # Order the results by month
+        )
+
+        # Calculate monthly orders
+        monthly_orders = (
+            Order.objects
+            .annotate(month=ExtractMonth('created'))  # Extract the month from the created field
+            .values('month')  # Group by month
+            .annotate(total_orders=Count('id'))  # Count total orders for each month
+            .order_by('month')  # Order the results by month
+        )
+
+        # Create lists to store the yearly data
+
+        # ----------------- yearly sales section ended ----------------
+
+        most_ordered_books = OrderProduct.objects.values('product__product__product_title').annotate(total_quantity=Coalesce(Sum('quantity'), 0)).order_by('-total_quantity')[:5]
+
+        # Print or use the most ordered books
+        book_names = [item['product__product__product_title'] for item in most_ordered_books]
+        quantities = [item['total_quantity'] for item in most_ordered_books]
+        current_year_start = datetime(datetime.now().year, 1, 1)
+        yearly_order_totals = (
+                Order.objects
+                .filter(created__gte=current_year_start)
+                .annotate(year=ExtractYear('created'))
+                .values('year')
+                .annotate(year_total=Sum('order_total'))
+                .order_by('year')
+        )
+        start_year = 2020  # Change this to your start year
+        current_year = datetime.now().year
+        all_years = list(range(start_year, current_year + 1))
+
+    # Retrieve the actual yearly sales data
+        yearly_sales_data = {sale['year']: sale['year_total'] for sale in yearly_order_totals}
+
+    # Populate the chart data
+        chart_data = []
+        for year in all_years:
+            year_total = yearly_sales_data.get(year, 0)  # Get the total sales for the year, or set it to 0 if no data available
+            chart_data.append(year_total)
+            
+        context={
+                'order_count':order_count,'order_total':order_total,'today_count':today_count,
+                'current_yearly_sales_count':current_yearly_sales_count,
+                'today_revenue':today_revenue,'order':orders,
+                'current_yearly_sales_revenue':current_yearly_sales_revenue,
+                'yearly_sales':yearly_sales,
+                'yearly_orders':yearly_orders,
+                'weekly_count': weekly_count,
+                'weekly_revenue': weekly_revenue,
+                'monthly_count': monthly_count,
+                'monthly_revenue': monthly_revenue,
+                'total_discount':common_discount,
+                'monthly_sales':monthly_sales,
+                'monthly_orders':monthly_orders,
+                'month_names': month_names,
+                'book_names': book_names,
+                'quantities': quantities,
+                'yearly_order_totals':yearly_order_totals,
+                'chart_data':chart_data,
+                'all_years' :all_years
+            }
+    except Exception as e:
+        print(e)    
+    return render(request,'admin/admin_dashboard.html',context)
 
 def admin_logout(request):
     logout(request)
@@ -92,15 +252,36 @@ def admin_user_manage(request, id):
 @staff_member_required(login_url='admin_login')
 def admin_category(request):
     try:
+        context={}
+        offers=Offer.objects.all().order_by('-id')
+        context={'offers':offers}
         if request.method=='POST':
             category_name=request.POST.get('categoryName')
             category_slug=category_name.replace(" ","-")
             category_discription=request.POST.get('categoryDescription')
+            category_offer=request.POST.get('offer')
+            cat_discount=request.POST.get('maxamount')
+            max_discount=None
+            cat_offer=None
+            offer_obj=Offer.objects.get(id=category_offer)
+            if category_offer is not '':
+                if offer_obj.is_expired():
+                        messages.error(request,'Offer expired')
+                        return redirect('admin_category',context)
+                else:
+                    cat_offer=offer_obj
+            else:
+                cat_offer=None 
+            if cat_discount is not '':
+                max_discount=cat_discount
+            else:
+                max_discount=None                   
+            
             exitscat=Category.objects.filter(category_name__iexact=category_name)
             if exitscat.exists():
                 messages.error(request,"Category already exits")
-                return redirect('admin_category')
-            category=Category(category_name=category_name,category_description=category_discription,slug=category_slug)
+                return redirect('admin_category',context)
+            category=Category(category_name=category_name,category_description=category_discription,slug=category_slug,offer=offer_obj,max_discount=max_discount)
             
             if request.FILES:
                 category.category_image=request.FILES['categoryImage']    
@@ -108,11 +289,11 @@ def admin_category(request):
 
             category.save()
             messages.success(request,"Category Added")
-            return redirect('admin_category')
-            
+            return redirect('admin_category',context)
+        context={'offers':offers}        
     except Exception as e:
         print(e)        
-    return render(request,'admin/admin_category.html')
+    return render(request,'admin/admin_category.html',context)
 
 @cache_control(no_cache=True, no_store=True)
 @staff_member_required(login_url='admin_login')
@@ -136,16 +317,33 @@ def admin_edit_category(request,id):
     context ={}
 
     try:
+        offers=Offer.objects.all().order_by('-id')
         category = Category.objects.get(id=id)
-        context={'category':category}
+        context={'category':category,'offers':offers}
         if request.method=="POST":
             if request.FILES:
                 os.remove(category.category_image.path)
                 category.category_image=request.FILES['image']   
-
+            
             category.category_name=request.POST.get('name') 
             category.category_description=request.POST.get('description')
+            category_offer=request.POST.get('offer')
+            cat_discount=request.POST.get('maxamount')
+            if cat_discount != '':
+                category.max_discount=cat_discount
+            if category_offer != '':
+                cat_offer=''
+                offer_obj=Offer.objects.get(id=category_offer)
+                if offer_obj.is_expired():
+                        messages.error(request,'Offer expired')
+                        return redirect('admin_edit_category',id=id)
+                else:
+                    cat_offer=offer_obj 
+                category.offer=cat_offer
 
+            else:
+                print('null entered')
+                category.offer=None    
             category.save()
             messages.success(request,"Edited Successfully")
             return redirect('admin_category_view')
@@ -1052,3 +1250,21 @@ def return_request(request, id):
     except Exception as e:
         print(e)
         return redirect('admin_order')
+#----------------------------------------------Reports------------------------------------
+
+
+@staff_member_required(login_url='admin_login')
+def reports(request):
+    context = {}
+    try:
+        products = Product_variant.objects.all()
+        cancel_orders = OrderProduct.objects.filter(item_cancel=True)
+
+        context = {
+            'products': products,
+            'cancel_orders': cancel_orders,
+        }
+    except Exception as e:
+        print(e)
+
+    return render(request, 'admin/admin_reports.html', context)

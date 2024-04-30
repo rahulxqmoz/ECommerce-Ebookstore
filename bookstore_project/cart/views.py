@@ -1,8 +1,9 @@
+from decimal import Decimal
 from django.contrib import messages
 from django.shortcuts import render,redirect
 import pdb
 from order.models import Order
-from user_app.models import CustomUser,UserAddress
+from user_app.models import CustomUser,UserAddress, WalletBook
 from buyproducts.models import Product_variant
 from . models import Cart,CartItem, Coupon
 import uuid
@@ -138,24 +139,17 @@ def update_cart_quantity(request):
             except ValueError:
                 new_quantity = 0
             # Retrieve the cart item
-        
             if item_id_str.isdigit():
                 item_id = int(item_id_str)
-            
                 cart_item = CartItem.objects.get(id=item_id)
-            
             else:
-        
                 user = CustomUser.objects.get(id=request.user.id)
                 cart_item = CartItem.objects.filter(customer=user)
-                
             if new_quantity!=0:
                 if cart_item.product.stock < new_quantity:
 
                     return JsonResponse({'error': 'Item stock exceeded!!','hide_quantity': True})
            
-               
-
             # Update the quantity of the cart item
             if new_quantity!=0:
                 cart_item.quantity = new_quantity
@@ -175,7 +169,6 @@ def update_cart_quantity(request):
             else:
                 sub_total=sum(int(item.product.offerprice()) * item.quantity for item in cart_item)    
                 
-            #sub_total=cart_item.sub_total()
             total_sub_total = cartitem.annotate(subtotal=F('product__product_price') * F('quantity'))
             total_sum = total_sub_total.aggregate(total_sum=Sum('subtotal'))
             user_id = CustomUser.objects.get(id=request.user.id)
@@ -185,16 +178,20 @@ def update_cart_quantity(request):
             discount_amount=0
             tax=0
             couponcode=" "
+            category_offeramount=0
             user_id = CustomUser.objects.get(id=request.user.id)
             cart_item = CartItem.objects.filter(customer=user_id).first() 
             cart_obj=Cart.objects.get(id=cart_item.cart.id)
+
+            #Calculate coupon amount and getting coupons
             alreadycouponexists=False
             if cart_obj.coupon:
+                if cart_obj.coupon.is_expired():
+                    return JsonResponse({'error': f'Coupon is expired!'})
                 alreadycouponexists=True
                 couponcode=f'Applied coupon code {cart_obj.coupon.coupon_code} successfully'
                 if cart_obj.coupon.min_amount > total:
-                    return JsonResponse({'error': f'Amount should be greater than {cart_obj.coupon.min_amount}'})
-                
+                    return JsonResponse({'error': f'Total product price should be greater than {cart_obj.coupon.min_amount}'})
                 discount_amount = total * int(cart_obj.coupon.off_percent) / 100
                 if discount_amount > cart_obj.coupon.max_discount:
                     discount_amount = cart_obj.coupon.max_discount
@@ -204,31 +201,38 @@ def update_cart_quantity(request):
                 get_coupon = Coupon.objects.get(coupon_code=coupon_code)
             except Coupon.DoesNotExist:
                 get_coupon = None
-            
             if get_coupon:
-            
+                if get_coupon.is_expired():
+                    return JsonResponse({'error': f'Coupon is expired!'})
                 cart_obj.coupon=get_coupon
-                
                 if get_coupon.min_amount > total:
                     return JsonResponse({'error': f'Amount should be greater than {get_coupon.min_amount}'})
-                
                 discount_amount = total * int(get_coupon.off_percent) / 100
                 if discount_amount > get_coupon.max_discount:
                     discount_amount = get_coupon.max_discount
-                
                 cart_obj.save()
-                
                 couponcode=f'Applied coupon code {get_coupon.coupon_code} successfully'
                 alreadycouponexists=True
 
+            #Calculating Category offer
+            cat_ofr_obj = CartItem.objects.filter(cart=cart_obj)
+            print("cat expired")
+            for items in cat_ofr_obj:
+                if not items.product.category.offer.is_expired():
+                    category_offeramount+=items.sub_total_with_category_offer()
+                else:
+                    category_offeramount+=0    
+            print("cat after")        
+            #Calculating total amount 
             discount = total_sum['total_sum'] - total
             shipping=0
+            if category_offeramount > 0 :
+                total=total-category_offeramount
             if total < 1000:
                 shipping=99
                 total=total+shipping
             else:
                 shipping=0     
-                
             total=total-discount_amount
             if total >0:
                 tax = (total * 3) // 100 
@@ -238,21 +242,12 @@ def update_cart_quantity(request):
             cart_obj=Cart.objects.get(id=cart_item.cart.id)
             cart_obj.tax=tax
             cart_obj.save()
-
-            return JsonResponse({'sub_total': sub_total, 'grand_total': total,'subtotaloffer':total_sum['total_sum'],'discount':discount,'shipping':shipping,'couponoffer':discount_amount,'tax':tax,'couponcode':couponcode,'alreadycouponexists':alreadycouponexists})
+            return JsonResponse({'sub_total': sub_total, 'grand_total': total,'subtotaloffer':total_sum['total_sum'],'discount':discount,'shipping':shipping,'couponoffer':discount_amount,'tax':tax,'couponcode':couponcode,'alreadycouponexists':alreadycouponexists,'category_offeramount':category_offeramount})
     except Exception as e:
         print(e)
         messages.error(request,'Page exception found!!')
         return redirect('index')
     return JsonResponse({'error': 'Invalid request'}, status=400)
-
-
-def qty_per_person(stock):
-    if stock>0:
-        result = stock / 5
-        return result
-    else:
-        return 0
 
 
 def checkout_address(request):
@@ -282,9 +277,6 @@ def place_order(request,id):
         callback= "http://" + "127.0.0.1:8000" + "/cart/place_order/{}".format(add_id)
         payment_method = request.GET.get('payment_method')
         razorpay_id=request.GET.get('razor_id')
-
-        
-
         useraddress=UserAddress.objects.get(id=id)
         user=CustomUser.objects.get(id=request.user.id)
         cartitem=CartItem.objects.filter(customer=user)
@@ -300,13 +292,14 @@ def place_order(request,id):
         discount_amount=0
         shipping_cost=0
         coupon_discount=0
-        
+        category_offeramount=0
+        #discount amount
         for cart in cartitem:
             withoffer += int(cart.sub_total())   
         for cart in cartitem:
             withoutoffer+= int(cart.product.product_price) * cart.quantity  
         discount_amount=withoutoffer-withoffer
-
+        #coupon
         if cart_obj.coupon:
             coupon_discount=withoffer * int(cart_obj.coupon.off_percent)/100
             if withoffer<cart_obj.coupon.min_amount:
@@ -315,16 +308,23 @@ def place_order(request,id):
             if cart_obj.coupon.max_discount<=coupon_discount:
                 coupon_discount=cart_obj.coupon.max_discount
             if coupon_discount>0:
-                withoffer=withoffer-coupon_discount        
+                withoffer=withoffer-coupon_discount  
+        #Calculating Category offer
+        cat_ofr_obj = CartItem.objects.filter(cart=cart_obj)
+        for items in cat_ofr_obj:
+            if not items.product.category.offer.is_expired():
+                category_offeramount+=items.sub_total_with_category_offer()           
+        #tax           
         tax=cart_obj.tax
-       
         if tax>0:
             withoffer=withoffer+tax
         if  withoffer<1000:
             shipping_cost=99
-            withoffer=withoffer+shipping_cost  
+            withoffer=withoffer+shipping_cost 
+        if category_offeramount>0:
+            withoffer=withoffer-category_offeramount     
        
-       
+        #payment razorpay 
         if payment_method == 'razorpay':
                 print("Entered to method")
                 my_order = Order()
@@ -334,6 +334,7 @@ def place_order(request,id):
                 my_order.order_total = withoffer  # product's total amount.
                 my_order.discount_amount = discount_amount
                 my_order.tax = tax
+                my_order.category_amount=category_offeramount
                 my_order.is_ordered = True
                 if coupon_obj:
                     my_order.coupon = coupon_obj
@@ -393,9 +394,6 @@ def place_order(request,id):
         if request.method=="POST":
             paymentMethod=request.POST.get('payment')
             if paymentMethod is not None and paymentMethod.strip() != '':
-               
-               
-                
                 my_order = Order()
                 my_order.user = user
                 my_order.address = useraddress
@@ -403,6 +401,7 @@ def place_order(request,id):
                 my_order.order_total = withoffer  # product's total amount.
                 my_order.discount_amount = discount_amount
                 my_order.tax = tax
+                my_order.category_amount=category_offeramount
                 my_order.is_ordered = True
                 if coupon_obj:
                     my_order.coupon = coupon_obj
@@ -448,6 +447,7 @@ def place_order(request,id):
                     cartitem.delete()
                 except:
                     pass
+                #Cash on delivery code
                 if paymentMethod == "cod":
                     payment.payment_method = 'Cashon Delivery'  # set current payment method
                     payment_id = order_id + "COD"
@@ -459,28 +459,37 @@ def place_order(request,id):
                     cartitem=CartItem.objects.filter(customer=user_id).count()
                     request.session['cart_item_count'] = cartitem
                     return render(request, 'products/confirm_order.html')
-                if paymentMethod == "razorpay":
-                    print('entered razor pay')
-                    # grand_total=int(withoffer)
-                    # client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
-                    # payments=client.order.create({'amount':grand_total*100,'currency':'INR','payment_capture':0})
-                    # order_id = payments['id']
-                    # payment.payment_method = 'Razor Pay'  # set current payment method
-                    # payment.payment_id = order_id  # check this payment_id
-                    # payment.is_paid = False
-                    # payment.save()
-                    # my_order.payment = payment
-                    # my_order.save()
-                    # return render(request, 'products/confirm_order.html')
-            
-
+                #Wallet payment code
+                if paymentMethod == "wallet":
+                    wallet_amount=user.wallet
+                    if wallet_amount>=withoffer:
+                        payment.payment_method = 'Wallet'
+                        payment_id = order_id + "WALLET"
+                        payment.payment_id = payment_id
+                        payment.is_paid = True
+                        payment.save()
+                        my_order.payment = payment
+                        my_order.save()
+                        user.wallet-=Decimal(withoffer)
+                        user.save()
+                        wallet_acc = WalletBook()
+                        wallet_acc.customer = user
+                        wallet_acc.amount = withoffer
+                        wallet_acc.description = "Product purchased.Money deducted from wallet!!"
+                        wallet_acc.increment = False
+                        wallet_acc.save()
+                        user_id=CustomUser.objects.get(id=request.user.id)
+                        cartitem=CartItem.objects.filter(customer=user_id).count()
+                        request.session['cart_item_count'] = cartitem
+                        return render(request, 'products/confirm_order.html')
+                    else:
+                        messages.error(request,f'You wallet amount is to low for make a payment.Wallet Balance Rs.{wallet_amount}') 
+                        return redirect('place_order',id=id)    
             else:
                 messages.error(request,'You to select a payment!!')
                 return redirect('place_order',id=id)        
-
-       
-
-        context={'address':useraddress,
+        context={
+                'address':useraddress,
                  'cartitem':cartitem,
                  'withoffer':withoffer,
                  'withoutoffer':withoutoffer,
@@ -492,13 +501,11 @@ def place_order(request,id):
                  'payment':payments,
                  'order_id':order_id,
                  'orders':order,
-                 'callback_url':callback
-
-                 }
-        
+                 'callback_url':callback,
+                 'category_offeramount':category_offeramount
+                }
     except Exception as e:
         print(e)    
-
     return render(request,'products/place_order.html',context)
 
 
@@ -520,20 +527,6 @@ def remove_coupon(request):
     else:
         # Return error response for invalid requests
         return JsonResponse({'error': 'Invalid request'}, status=400)
-    
-
-def razorpay_gateway(request):
-    grand_total = request.GET.get('grand_total')
-    print("Grand Total:", grand_total)  
-    client = razorpay.Client(auth=(settings.KEY, settings.SECRET))
-    print(client)
-    paymentrazor=client.order.create({'amount':int(float((grand_total))),'currency':'INR','payment_capture':1})
-    print(paymentrazor)
-    if grand_total:
-        
-        return HttpResponse(f'Payment processed for grand total: {grand_total}')
-    else:
-        return HttpResponse('Error: Grand total not provided')
     
 
 @csrf_exempt

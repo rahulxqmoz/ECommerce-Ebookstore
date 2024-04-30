@@ -6,6 +6,37 @@
 
 {% block content %}
 
+{% if messages %}
+    <!-- Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">A message for you!!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trigger the modal -->
+    <script>
+        $(document).ready(function(){
+            $('#confirmationModal').modal('show');
+        });
+    </script>
+{% endif %}
+
         <!-- Breadcrumb Start -->
         <div class="breadcrumb-wrap">
             <div class="container">
@@ -27,10 +58,11 @@
                         <div  class="row d-flex justify-content-center" style="align-items: center">
                             <div id="error-message" style="color:red;">
                                 {% for message in messages %}
-                                                       {{ message }}
-                                                   {% endfor %}
+                                    {{ message }}
+                                {% endfor %}
+                            </div>
                         </div>
-                        </div>
+                        <br><br>
                         <div class="table-responsive">
                             <table class="table table-bordered">
                                 <thead class="thead-dark">
@@ -107,6 +139,7 @@
                                 <p>Sub Total :<span id="subtotaloffer">{{ subtotaloffer }}</span></p>
                                 <p>Discount :<span id="discount">Rs.{{ discount }}</span></p>
                                 <p>Coupon Discount :<span id="coupon_offer">Rs.{{couponoffer}}</span></p>
+                                <p>Category Discount :<span id="category_offeramount">Rs.{{category_offeramount}}</span></p>
                                 <p>Shipping Cost :<span id="shipping-cost">Rs.{{shipping}}</span></p>
                                 <p>Tax :<span id="tax">Rs.{{tax}}</span></p>
                                 <h4>Grand Total :<span id="grand_total">Rs.{{ grand_total }}</span></h4>
@@ -119,8 +152,9 @@
                 </div>
             </div>
         </div>
+        
         <!-- Cart End -->
-
+      
 
         
 
@@ -177,7 +211,8 @@
                             $('#discount').text(response.discount);
                             $('#coupon_offer').text(response.couponoffer)
                             $('#tax').text(response.tax)
-                            $('#couponcode').text(response.couponcode)    
+                            $('#couponcode').text(response.couponcode) 
+                            $('#category_offeramount').text(response.category_offeramount)   
                             console.log(response.alreadycouponexists)  
                             if (response.alreadycouponexists) {
                             $('#couponremove').show(); // Show the button
@@ -258,6 +293,8 @@
                 addToCartButton.prop('disabled', false);
                 }
                 }
+
+                
             });
 
 
@@ -284,8 +321,11 @@
             });
         });
 
+
+
         </script>
 
-        
+   
+
 
 {% endblock %}

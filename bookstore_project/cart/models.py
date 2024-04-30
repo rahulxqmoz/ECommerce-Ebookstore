@@ -60,6 +60,13 @@ class CartItem(models.Model):
     
     def sub_total_without_offer(self):
         return self.product.price * self.quantity
+    
+    def sub_total_with_category_offer(self):
+        result = int((self.sub_total()) - (self.sub_total() * self.product.category.offer.off_percent)/100 )
+        if result > self.product.category.max_discount:
+            if self.product.category.max_discount is not None: 
+                result=self.product.category.max_discount
+        return result
 
     def __str__(self):
         return f"self.product.variant_name"

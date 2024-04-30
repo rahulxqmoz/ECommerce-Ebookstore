@@ -521,13 +521,11 @@ def category_wise(request,id):
     try:
        
         category = Category.objects.get(id=id)
+        category_list=Category.objects.filter(is_active=True).order_by('id')
         product=Product_variant.objects.filter(category=category, is_active=True)
         categoryall = Category.objects.filter(product_variant__is_active=True).distinct().order_by('-id')
-        context={'listproducts':product,'category':categoryall,'categoryname':category}
+        context={'listproducts':product,'category':categoryall,'categoryname':category,'category_list':category_list}
         return render(request,'user/category_wise.html',context)
-   
-
-
     except Exception as e:
         print(e)
         messages.error(request,"Category wise pick failed")

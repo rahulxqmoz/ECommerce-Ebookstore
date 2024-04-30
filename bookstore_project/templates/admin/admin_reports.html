@@ -1,0 +1,91 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block js %}
+
+<script src="{% static 'admin/js/print.js' %}"></script>
+
+
+{% endblock js %}
+{% block body %}
+
+<div class="container-fluid pt-4 px-4">
+    <div class="mb-4">
+        <h2 class="text-center">REPORTS</h2>
+    </div>
+
+    <div class="bg-white rounded p-4 mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h3 class="mb-0">Stock Reports</h3>
+            <div class="d-flex flex-column gap-3">
+                <button class="btn btn-sm btn-warning" onclick="printsortTable()">Download PDF <i class="bi bi-file-earmark-pdf"></i></button>
+                <button class="btn btn-sm btn-warning" onclick="exportSortReportToExcel()">Download Excel <i class="bi bi-file-earmark-excel"></i></button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table text-start align-middle table-bordered table-hover mb-2" id="sortTable">
+                <thead class="mt-2" style="font-size: 20px;">
+                    <tr>
+                        <th scope="col">Sr No:</th>
+                        <th scope="col">Item Id</th>
+                        <th scope="col">Book</th>
+                        <th scope="col">Stock</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for variant in products %}
+                    <tr style="font-size: 18px;">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ variant.id }}</td>
+                        <td>{{ variant.variant_name }}</td>
+                        <td>{{ variant.stock }}</td>
+                        <td>{{ variant.product_price }}</td>
+                        <td><a class="btn btn-sm btn-primary" href="#">Detail</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white rounded p-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h3 class="m5">Cancel Reports</h3>
+            <div class="d-flex flex-column gap-3">
+                <button class="btn btn-sm btn-warning" onclick="printcancelTable()">Download PDF <i class="bi bi-file-earmark-pdf"></i></button>
+                <button class="btn btn-sm btn-warning" onclick="exportCancelTable()">Download Excel <i class="bi bi-file-earmark-excel"></i></button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table text-start align-middle table-bordered table-hover mb-2" id="customTable">
+                <thead class="mt-2" style="font-size: 20px;">
+                    <tr>
+                        <th scope="col">Sr No:</th>
+                        <th scope="col">Item Id</th>
+                        <th scope="col">Product</th>
+                        <th scope="col">Reason</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in cancel_orders %}
+                    <tr style="font-size: 18px;">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ order.id }}</td>
+                        <td>{{ order.product.variant_name }}</td>
+                        <td>{{ order.return_reason }}</td>
+                        <td>{{ order.product_price }}</td>
+                        <td>{{ order.quantity }}</td>
+                        <td><a class="btn btn-sm btn-primary" href="#">Detail</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

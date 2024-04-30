@@ -42,6 +42,7 @@ class Order(models.Model):
     updated = models.DateTimeField(auto_now=True)
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     coupon_amount=models.FloatField(null=True)
+    category_amount=models.FloatField(null=True)
 
     def __str__(self):
         return self.order_id

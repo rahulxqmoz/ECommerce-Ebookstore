@@ -11,13 +11,32 @@ def validate_expiry_date(value):
             (f"Expiry date cannot be earlier than {min_date}.")
         )
     
+class Offer(models.Model):
+    name = models.CharField(max_length=100)
+    off_percent = models.PositiveBigIntegerField()
+    start_date = models.DateField(validators=[validate_expiry_date])
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=True,null=False, blank=True)
 
+    def __str__(self) -> str:
+        return self.name
+    
+    def is_expired(self):
+        print("date :::::::::::", date.today())
+        if self.end_date < date.today():
+            return True
+        return False
+    
 class Category(models.Model):
     category_name = models.CharField(max_length=150, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
     category_description = models.TextField(null=True)
     category_image = models.ImageField(upload_to='category_images/')
     is_active = models.BooleanField(default=True, null=False, blank=True)
+    offer=models.ForeignKey(Offer,on_delete=models.CASCADE,null=True)
+    max_discount=models.PositiveBigIntegerField(null=True)
+    
+
 
     class Meta:
         ordering = ['category_name']
@@ -49,24 +68,12 @@ class Products(models.Model):
     created_date=models.DateTimeField(auto_now_add=True)
     modified_date=models.DateTimeField(auto_now_add=True)
 
-class Offer(models.Model):
-    name = models.CharField(max_length=100)
-    off_percent = models.PositiveBigIntegerField()
-    start_date = models.DateField(validators=[validate_expiry_date])
-    end_date = models.DateField()
-    is_active = models.BooleanField(default=True,null=False, blank=True)
 
-    def __str__(self) -> str:
-        return self.name
     
     
         
     
-    def is_expired(self):
-        print("date :::::::::::", date.today())
-        if self.end_date < date.today():
-            return True
-        return False
+    
     
 class Editions(models.Model):
     editons_name=models.CharField(max_length=150)

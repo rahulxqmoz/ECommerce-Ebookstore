@@ -20,6 +20,8 @@
       <th scope="col">Category Name</th>
       <th scope="col">Slug</th>
       <th scope="col">Category Description</th>
+      <th scope="col">Category Offer</th>
+      <th scope="col">Maximum Discount</th>
       <th scope="col">Catergory Image</th>
       <th scope="col">Status</th>
       <th scope="col">Edit | Delete/Unblock</th>
@@ -34,6 +36,8 @@
       <td> {{category.category_name}}</td>
       <td> {{category.slug}}</td>
       <td> {{category.category_description|truncatechars:20}}</td>
+      <td> {{category.offer.name}}</td>
+      <td> {{category.max_discount}}</td>
       <td> {% if category.category_image %}
         <div style="width: 90px; height: 90px;">
             <img src="{{ category.category_image.url }}" alt="Small Image"

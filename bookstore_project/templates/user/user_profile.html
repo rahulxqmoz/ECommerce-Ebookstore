@@ -117,16 +117,24 @@
                             {% csrf_token %}
 
                             <div class="col-md-6">
+                                <label for="first_name">First Name</label>
                                 <input type="text" placeholder="First Name" name="first_name" value="{{user.first_name}}">
                             </div>
                             <div class="col-md-6">
+                                <label for="last_name">Last Name</label>
                                 <input type="text" placeholder="Last Name" name="last_name"  value="{{user.last_name}}">
                             </div>
                             <div class="col-md-6">
+                                <label for="phone">Phone</label>
                                 <input type="text" placeholder="Mobile" name="phone" value="{{user.phone}}">
                             </div>
                             <div class="col-md-6">
+                                <label for="email">Email</label>
                                 <input type="email" placeholder="Email" name="email" readonly value="{{user.email}}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="referralcode">Referal Code</label>
+                                <input type="text" placeholder="Referal code" name="referralcode" readonly value="{{user.referral_code}}">
                             </div>
                             {% endif %}
                             

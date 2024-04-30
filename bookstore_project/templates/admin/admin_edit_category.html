@@ -19,7 +19,13 @@
                 <h5 class="card-title text-white mb-5">Category Update Table</h5>
 
                 <!-- Edit category form  -->
-
+                <div class="row d-flex justify-content-center" style="align-items: center;text-align: center;"> <span class="text-danger fw-5">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </span></div>
+                <br>
+                <br>
                 <form enctype="multipart/form-data" method="post">
                     {% csrf_token %}
                     <div class="row mb-4">
@@ -50,7 +56,25 @@
                             </div>
                         </div>
                     </div>
-
+                    <div class="row mb-4">
+                        <label for="offertName" class="form-label">Select Offer</label>
+                        <select class="form-select select2" id="offertName" name="offer" >
+                            {% if category.offer %}
+                            <option value="{{category.offer.id}}">{{category.offer.name}}</option>
+                            <option value="">--No Coupon--</option>
+                            {% else %}
+                            <option value="">--Select--</option>
+                            {% endif %}
+                            
+                            {% for offer in offers %}
+                            <option value="{{offer.id}}">{{offer.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row mb-4">
+                        <label for="maxAmount" class="form-label">Maximum Amount</label>
+                        <input type="number" class="form-control" id="maxAmount" name="maxamount" value="{{category.max_discount}}">
+                    </div>
                     <!-- Description input -->
                     <div class="form-outline mb-4">
                         <textarea class="form-control bg-grey text-black" id="productDesc" rows="4" name="description"> {{ category.category_description }} </textarea>
@@ -61,6 +85,7 @@
                     <div class="text-end">
                         <button type="submit" class="btn-lg border-0 btn-success btn-block mb-4">Update</button>
                     </div>
+                  
                 </form>
               <!-- Edit product form end -->
                 <hr />

@@ -52,9 +52,7 @@ INSTALLED_APPS = [
     'buyproducts',
     'cart',
     'order',
-    'allauth.socialaccount.providers.github',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
 
 
 ]
@@ -99,7 +97,7 @@ AUTHENTICATION_BACKENDS = [
     
     'django.contrib.auth.backends.ModelBackend',
 
-   
+
     'allauth.account.auth_backends.AuthenticationBackend',
     
 ]
@@ -190,18 +188,6 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 
 SITE_ID=1
 
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'OAUTH_PKCE_ENABLED': True,
-    }
-}
 
 SOCIALACCOUNT_QUERY_EMAIL =True
 

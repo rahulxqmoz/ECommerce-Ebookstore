@@ -14,8 +14,21 @@
             <textarea class="form-control" id="categoryDescription" name="categoryDescription" rows="3"></textarea>
         </div>
         <div class="mb-3">
+            <label for="offertName" class="form-label">Select Offer</label>
+            <select class="form-select select2" id="offertName" name="offer" >
+                <option value="">--Select--</option>
+                {% for offer in offers %}
+                <option value="{{offer.id}}">{{offer.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
             <label for="categoryImage" class="form-label">Category Image</label>
             <input type="file" class="form-control" id="categoryImage" name="categoryImage" accept="image/*" required>
+        </div>
+        <div class="mb-3">
+            <label for="maxAmount" class="form-label">Maximum Amount</label>
+            <input type="number" class="form-control" id="maxAmount" name="maxamount">
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
         <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
