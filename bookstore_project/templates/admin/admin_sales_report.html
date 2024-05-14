@@ -1,0 +1,173 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body %}
+
+
+<div class="container-fluid pt-4 px-4">
+    <div class="mb-4">
+        <h2 class="text-center">SALES REPORTS</h2>
+    </div>
+
+    <div class="bg-white rounded p-4 mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h3 class="mb-0">Sales Reports</h3>
+            <div class="d-flex flex-column gap-3">
+                <button class="btn btn-sm btn-warning" onclick="printTableSales()">Download PDF <i class="bi bi-file-earmark-pdf"></i></button>
+                <button class="btn btn-sm btn-warning" onclick="exportReportToExcelSales()">Download Excel <i class="bi bi-file-earmark-excel"></i></button>
+            </div>
+        </div>
+
+        <form id="dateForm" method="post" action="">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="startDate" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDate" name="start_date" lang="en-IN">
+                </div>
+                <div class="col-md-6">
+                    <label for="endDate" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDate" name="end_date" lang="en-IN">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <br>
+        <div class="table-responsive">
+            <table class="table text-start align-middle table-bordered table-hover mb-2" id="salesTable">
+                <thead class="mt-2" style="font-size: 20px;">
+                    <tr>
+                        <th scope="col">From Date</th>
+                        <th scope="col">To Date</th>
+                        <th scope="col">Order Count</th>
+                        <th scope="col">Total Sales Revenue</th>
+                        <th scope="col">Discount Amount</th>
+                        <th scope="col">Coupon Amount</th>
+                        <th scope="col">Total Discount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in order_report %}
+                    <tr>
+                    <td>{{order.start_date}}</td>
+                    <td>{{order.end_date}}</td>
+                    <td>{{order.total_orders_count}}</td>
+                    <td>Rs.{{order.total_sales_revenue|floatformat:2}}</td>
+                    <td>Rs.{{order.discount_amount|floatformat:2}}</td>
+                    <td>Rs.{{order.coupon_amount|floatformat:2}}</td>
+                    <td>Rs.{{order.total_discount|floatformat:2}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+</div>
+
+
+
+<script>
+    document.getElementById("startDate").addEventListener("change", function() {
+        var startDate = new Date(this.value);
+        var endDateInput = document.getElementById("endDate");
+        var endDate = new Date(endDateInput.value);
+        
+        // If the end date is before the start date, set it to the start date
+        if (endDate < startDate) {
+            endDateInput.value = this.value;
+        }
+
+        // Set the min attribute of the end date input to the selected start date
+        endDateInput.min = this.value;
+    });
+</script>
+<script>
+    document.getElementById("dateForm").addEventListener("submit", function(event) {
+        // Get the start and end date input fields
+        var startDateInput = document.getElementById("startDate");
+        var endDateInput = document.getElementById("endDate");
+
+        // Get the values of the start and end date input fields
+        var startDate = startDateInput.value;
+        var endDate = endDateInput.value;
+
+        // Check if either start date or end date is empty
+        if (startDate === "" || endDate === "") {
+            // Prevent form submission
+            event.preventDefault();
+
+            // Display an alert to the user
+            alert("Please fill out both start date and end date fields.");
+        }
+    });
+</script>
+
+
+<script>
+    function printTableSales() {
+        // Get the table element
+        var table = document.querySelector("#salesTable");
+
+        // Check if the table has rows
+        if (table && table.rows.length > 1) {
+            // Create a new window for printing
+            var newWin = window.open('', 'Print-Window');
+            newWin.document.open();
+
+            // Add necessary CSS styles for the table
+            newWin.document.write('<html><head><style>');
+            newWin.document.write('table { border-collapse: collapse; width: 100%; }');
+            newWin.document.write('table, th, td { border: 1px solid black; }');
+            newWin.document.write('</style></head><body onload="window.print()">');
+
+            // Write the table HTML
+            newWin.document.write(table.outerHTML);
+
+            newWin.document.write('</body></html>');
+            newWin.document.close();
+
+            setTimeout(function () { newWin.close(); }, 10);
+        } else {
+            console.log("No records found to print.");
+        }
+    }
+
+    // sort table
+
+    function exportReportToExcelSales() {
+        // Get the table element
+        const table = document.querySelector("#salesTable");
+
+        // Check if the table has rows
+        if (table && table.rows.length > 1) {
+            // Convert the table to a workbook
+            const workbook = XLSX.utils.table_to_book(table);
+
+            // Convert the workbook to a binary Excel file
+            const excelBinary = XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
+
+            // Create a Blob object and download the file
+            const blob = new Blob([s2ab(excelBinary)], { type: "application/octet-stream" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "salesReport.xlsx";
+            link.click();
+        } else {
+            console.log("No records found to export.");
+        }
+
+        // Utility function to convert a string to an ArrayBuffer
+        function s2ab(s) {
+            const buf = new ArrayBuffer(s.length);
+            const view = new Uint8Array(buf);
+            for (let i = 0; i < s.length; i++) {
+                view[i] = s.charCodeAt(i) & 0xff;
+            }
+            return buf;
+        }
+    }
+</script>
+
+{% endblock %}

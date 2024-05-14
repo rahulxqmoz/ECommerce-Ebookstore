@@ -33,10 +33,10 @@
                 <div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
                     <a class="nav-link active" id="dashboard-nav" data-toggle="pill" href="#dashboard-tab" role="tab">Dashboard</a>
                     <a class="nav-link" id="orders-nav" data-toggle="pill" href="#orders-tab" role="tab">Orders</a>
-                    <a class="nav-link" id="payment-nav" data-toggle="pill" href="#payment-tab" role="tab">Payment Method</a>
+                    <!-- <a class="nav-link" id="payment-nav" data-toggle="pill" href="#payment-tab" role="tab">Payment Method</a> -->
                     <a class="nav-link" id="address-nav" data-toggle="pill" href="#address-tab" role="tab">Address</a>
                     <a class="nav-link" id="account-nav" data-toggle="pill" href="#account-tab" role="tab">Account Details</a>
-                    <a class="nav-link" id="account-nav" data-toggle="pill" href="{% url 'proceed_to_pay' %}" role="tab">Wallet</a>
+                    <a class="nav-link" id="wallet-nav" data-toggle="pill" href="{% url 'proceed_to_pay' %}" role="tab">Wallet</a>
                     <a class="nav-link" href="{% url 'user_logout' %}">Logout</a>
                 </div>
             </div>
@@ -49,7 +49,7 @@
                         </p> 
                     </div>
                     <div class="tab-pane fade" id="orders-tab" role="tabpanel" aria-labelledby="orders-nav">
-                        <div class="table-responsive">
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                             <table class="table table-bordered">
                                 <thead class="thead-dark">
                                     <tr>
@@ -91,7 +91,7 @@
                         <div class="row">
                             {% if address %}
                             {% for address in  address%}
-                            <div class="col-md-6">
+                            <div class="col-md-6 mt-3">
                                 <h5>Shipping Address</h5>
                                 {% if address.name %}
                                 <p>{{address.name}}</p>
@@ -112,41 +112,43 @@
                         {% if user %}
                         <h4 class="d-flex justify-content-between">Account Details</h4>
                         
-                        <form action="" method="post">
-                        <div class="row">
-                            {% csrf_token %}
-
-                            <div class="col-md-6">
-                                <label for="first_name">First Name</label>
-                                <input type="text" placeholder="First Name" name="first_name" value="{{user.first_name}}">
+                        <form action="" method="post" id="updateAccountForm">
+                            <div class="row">
+                                {% csrf_token %}
+                        
+                                <div class="col-md-6">
+                                    <label for="first_name">First Name</label>
+                                    <input type="text" placeholder="First Name" name="first_name" id="first_name" value="{{user.first_name}}">
+                                    <span id="firstNameError" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="last_name">Last Name</label>
+                                    <input type="text" placeholder="Last Name" name="last_name" id="last_name" value="{{user.last_name}}">
+                                    <span id="lastNameError" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="phone">Phone</label>
+                                    <input type="text" placeholder="Mobile" name="phone" id="phone" value="{{user.phone}}">
+                                    <span id="phoneError" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email">Email</label>
+                                    <input type="email" placeholder="Email" name="email" readonly value="{{user.email}}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="referralcode">Referral Code</label>
+                                    <input type="text" placeholder="Referral code" name="referralcode" readonly value="{{user.referral_code}}">
+                                </div>
+                                {% endif %}
+                                <div class="col-md-12">
+                                    <button type="submit">Update Account</button>
+                                    <br><br>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="last_name">Last Name</label>
-                                <input type="text" placeholder="Last Name" name="last_name"  value="{{user.last_name}}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="phone">Phone</label>
-                                <input type="text" placeholder="Mobile" name="phone" value="{{user.phone}}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email">Email</label>
-                                <input type="email" placeholder="Email" name="email" readonly value="{{user.email}}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="referralcode">Referal Code</label>
-                                <input type="text" placeholder="Referal code" name="referralcode" readonly value="{{user.referral_code}}">
-                            </div>
-                            {% endif %}
-                            
-                            <div class="col-md-12">
-                                <button>Update Account</button>
-                                <br><br>
-                            </div>
-                        </div>
                         </form>
                         {% if user %}
                         <h4>Password change</h4>
-                        <form action="{% url 'change_password_user' user.id %}" method="post">
+                        <form action="{% url 'change_password_user' user.id %}" method="post" onsubmit="return validatePassword()">
                         <div class="row">
                             {% csrf_token %}
                             <div class="col-md-12">
@@ -157,10 +159,14 @@
                             
                           
                             <div class="col-md-6">
-                                <input type="password" placeholder="New Password" name="password">
+                                <input type="password" placeholder="New Password"  id="newpassword" name="password">
+                              
                             </div>
                             <div class="col-md-6">
-                                <input type="password" placeholder="Confirm Password" name="c_password">
+                                <input type="password" placeholder="Confirm Password" id="confirm_password" name="c_password">
+                            </div>
+                            <div class="col-md-12">
+                                <span id="passwordStrength" style="color: red;" ></span>
                             </div>
                             <div class="col-md-12">
                                 <button>Save Changes</button>
@@ -169,7 +175,12 @@
                     </form>
                     {% endif %}
                     </div>
+                    <div class="tab-pane fade" id="account-tab" role="tabpanel" aria-labelledby="wallet-nav">
+                        {% block wallet %}
 
+                        {% endblock %}
+
+                    </div>
                   
                 </div>
             </div>
@@ -178,7 +189,31 @@
 </div>
 <!-- My Account End -->
 
+<script>
+    function validatePassword() {
+        var newPassword = document.getElementById("newpassword").value;
+        var confirmPassword = document.getElementById("confirm_password").value;
+        var strengthSpan = document.getElementById("passwordStrength");
 
+        // Check if new password and confirm password match
+        if (newPassword !== confirmPassword) {
+            strengthSpan.innerText = "Passwords do not match";
+            return false;
+        }
+
+        // Check if password meets strength criteria
+        var lowerCaseLetters = /[a-z]/g;
+        var upperCaseLetters = /[A-Z]/g;
+
+        if (!lowerCaseLetters.test(newPassword) || !upperCaseLetters.test(newPassword) || newPassword.length < 8) {
+            strengthSpan.innerText = "Password must be at least 8 characters long and contain at least one uppercase letter and one lowercase letter!!";
+            return false;
+        }
+
+        strengthSpan.innerText = ""; // Clear previous strength message
+        return true;
+    }
+</script>
 <script>
     function myFunction() {
       var x = document.getElementById("myInput");
@@ -198,6 +233,45 @@
     }
 </script>
 
+<script>
+    document.getElementById('updateAccountForm').addEventListener('submit', function(event) {
+        let valid = true;
+    
+        // Clear previous errors
+        document.getElementById('firstNameError').textContent = '';
+        document.getElementById('lastNameError').textContent = '';
+        document.getElementById('phoneError').textContent = '';
+    
+        // Validate first name
+        const firstName = document.getElementById('first_name').value.trim();
+        if (!firstName) {
+            document.getElementById('firstNameError').textContent = 'First Name cannot be null.';
+            valid = false;
+        } else if (/\d/.test(firstName)) {
+            document.getElementById('firstNameError').textContent = 'First Name cannot contain numbers.';
+            valid = false;
+        }
+    
+        // Validate last name
+        const lastName = document.getElementById('last_name').value.trim();
+        if (/\d/.test(lastName)) {
+            document.getElementById('lastNameError').textContent = 'Last Name cannot contain numbers.';
+            valid = false;
+        }
+    
+        // Validate phone number
+        const phone = document.getElementById('phone').value.trim();
+        if (!/^\d{10}$/.test(phone)) {
+            document.getElementById('phoneError').textContent = 'Phone number must be a 10 digit number.';
+            valid = false;
+        }
+    
+        // Prevent form submission if validation fails
+        if (!valid) {
+            event.preventDefault();
+        }
+    });
+    </script>
 
 
 {% endblock %}

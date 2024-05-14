@@ -18,7 +18,6 @@
       
       <th scope="col">Sl No</th>
       <th scope="col">Category Name</th>
-      <th scope="col">Slug</th>
       <th scope="col">Category Description</th>
       <th scope="col">Category Offer</th>
       <th scope="col">Maximum Discount</th>
@@ -34,7 +33,6 @@
     <tr>
       <th scope="row">{{ forloop.counter }}</th>
       <td> {{category.category_name}}</td>
-      <td> {{category.slug}}</td>
       <td> {{category.category_description|truncatechars:20}}</td>
       <td> {{category.offer.name}}</td>
       <td> {{category.max_discount}}</td>

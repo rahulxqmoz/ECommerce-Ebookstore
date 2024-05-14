@@ -51,7 +51,7 @@
                                     <img src="{{list.product.product.product_image.url}}" alt="Image">
                                  {% endif %}</a></td>
                                 <td><a href="#">{{list.product.variant_name}}</a></td>
-                                <td>{{list.product.offerprice}}</td>
+                                <td>Rs. {{list.product.price_sub_total|floatformat:2}}</td>
                            <td>     <a href="{% url 'product_detail' list.product.id %}"> <button>View Product</button></a></td>
                                 <td><a href="{% url 'delete_wishlist' list.product.id %}"> <button><i class="fa fa-trash"></i></button></a></td>
                             </tr>

@@ -3,11 +3,12 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Add Edition</h2>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" id="addEditionForm" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
             <label for="editionName" class="form-label">Edition Name</label>
-            <input type="text" class="form-control" id="editionName" name="editioname" required>
+            <input type="text" class="form-control" id="editionName" name="editioname" >
+            <div id="authorNameError" class="text-danger"></div>
         </div>
         <div class="mb-3">
             <label for="editionDesc" class="form-label">Edition Description</label>
@@ -16,6 +17,7 @@
         <div class="mb-3">
             <label for="publicationYear" class="form-label">Publication Year</label>
             <input type="number" class="form-control" id="publicationYear" name="year" required>
+            <div id="publicationYearError" class="text-danger"></div>
         </div>
         <div class="mb-3">
             <label for="editionPublisher" class="form-label">Publisher</label>
@@ -30,6 +32,33 @@
         </span></div>
     </form>
 </div>
+<script>
+    document.getElementById("addEditionForm").addEventListener("submit", function(event) {
+        var editionName = document.getElementById("editionName").value.trim();
+        var editionNameError = document.getElementById("authorNameError");
+        var publicationYear = document.getElementById("publicationYear").value;
+        
 
+        // Validate author name
+        if (!editionName || !isNaN(editionName)) {
+            editionNameError.textContent = "Edition name is required and must be a valid name";
+            event.preventDefault();
+        } else {
+            authorNameError.textContent = "";
+        }
+
+          // Validate publication year
+          if (publicationYear < 1900 || isNaN(publicationYear)) {
+            event.preventDefault();
+            document.getElementById("publicationYearError").textContent = "Publication year must be a valid year after 1900";
+        } else {
+            document.getElementById("publicationYearError").textContent = "";
+        }
+
+    
+    });
+</script>
+
+</script>
 
 {% endblock %}

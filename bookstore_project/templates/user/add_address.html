@@ -1,42 +1,45 @@
 {% extends 'base.html' %}
 
 {% load static %}
-
 {% load custom_tags %}
 
 {% block content %}
-
 <div class="container mt-5">
     <h2>Add Address</h2>
-    <form action="{% url 'add_address' 0 %}" method="post" enctype="multipart/form-data">
+    <form id="addressForm" action="{% url 'add_address' 0 %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
             <label for="username" class="form-label">Name</label>
-            <input type="text" class="form-control" id="username" name="name" >
+            <input type="text" class="form-control" id="username" name="name">
+            <span class="text-danger" id="usernameError"></span>
         </div>
         <div class="mb-3">
             <label for="mobilenum" class="form-label">Mobile No</label>
-            <input type="number" class="form-control" id="mobilenum" name="phone" required>
+            <input type="number" class="form-control" id="mobilenum" name="phone">
+            <span class="text-danger" id="mobilenumError"></span>
         </div>
         <div class="mb-3">
             <label for="addressAdd" class="form-label">Address</label>
             <textarea name="address" class="form-control" id="addressAdd" cols="20" rows="5"></textarea>
+            <span class="text-danger" id="addressAddError"></span>
         </div>
         <div class="mb-3">
             <label for="townAdd" class="form-label">Town</label>
-            <input type="text" class="form-control" id="townAdd" name="town" required>
+            <input type="text" class="form-control" id="townAdd" name="town" >
+            <span class="text-danger" id="townAddError"></span>
         </div>
         <div class="mb-3">
             <label for="zipcodeAdd" class="form-label">Zip - Code</label>
-            <input type="number" class="form-control" id="zipcodeAdd" name="zipcode" required>
+            <input type="number" class="form-control" id="zipcodeAdd" name="zipcode" >
+            <span class="text-danger" id="zipcodeAddError"></span>
         </div>
         <div class="mb-3">
             <label for="nearby_locationAdd" class="form-label">Near By Location</label>
-            <input type="text" class="form-control" id="nearby_locationAdd" name="nearby_location" required>
+            <input type="text" class="form-control" id="nearby_locationAdd" name="nearby_location">
         </div>
         <div class="mb-3">
             <label for="districtAdd" class="form-label">District</label>
-            <select class="form-control" id="sel1" name="district" required>
+            <select class="form-control" id="sel1" name="district" >
                 <option value=""> District </option>
                 <option value="Kasarkode"> Kasarkode </option>
                 <option value="Kannur"> Kannur </option>
@@ -52,10 +55,11 @@
                 <option value="Kollam">Kollam</option>
                 <option value="Thiruvananthapuram">Thiruvananthapuram</option>
             </select>
+            <span class="text-danger" id="districtAddError"></span>
         </div>
         <div class="mb-3">
             <label for="stateAdd" class="form-label">State</label>
-            <select name="state" class="form-control" id="state" name="state" required>
+            <select name="state" class="form-control" id="state" >
                 <option value="">Select State</option>
                 <option value="Andhra Pradesh">Andhra Pradesh</option>
                 <option value="Arunachal Pradesh">Arunachal Pradesh</option>
@@ -93,16 +97,80 @@
                 <option value="Delhi">Delhi</option>
                 <option value="Puducherry">Puducherry</option>
             </select>
-            
+            <span class="text-danger" id="stateAddError"></span>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
-        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-        </span></div>
+        <div class="row d-flex justify-content-center" style="align-items: center">
+            <span class="text-danger fw-5">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </span>
+        </div>
     </form>
 </div>
 <br>
+
+<script>
+document.getElementById('addressForm').addEventListener('submit', function(event) {
+    let valid = true;
+
+    // Clear previous error messages
+    document.querySelectorAll('.text-danger').forEach(el => el.textContent = '');
+
+    // Validate name
+    const name = document.getElementById('username').value;
+    if (!name || /\d/.test(name)) {
+        document.getElementById('usernameError').textContent = 'Name should be valid and not contain numbers.';
+        valid = false;
+    }
+
+    // Validate address
+    const address = document.getElementById('addressAdd').value;
+    if (!address) {
+        document.getElementById('addressAddError').textContent = 'Address cannot be null.';
+        valid = false;
+    }
+
+    const mobileNumber = document.getElementById('mobilenum').value;
+    if (!mobileNumber || mobileNumber.length !== 10) {
+        document.getElementById('mobilenumError').textContent = 'Mobile number must be exactly 10 digits.';
+        valid = false;
+    }
+
+    // Validate town
+    const town = document.getElementById('townAdd').value;
+    if (!town) {
+        document.getElementById('townAddError').textContent = 'Town cannot be null.';
+        valid = false;
+    }
+
+    // Validate zip code
+    const zipcode = document.getElementById('zipcodeAdd').value;
+    if (!zipcode || zipcode.length !== 6) {
+        document.getElementById('zipcodeAddError').textContent = 'Zip Code cannot be null and must be valid number';
+        valid = false;
+    }
+
+    // Validate district
+    const district = document.getElementById('sel1').value;
+    if (!district) {
+        document.getElementById('districtAddError').textContent = 'District cannot be null.';
+        valid = false;
+    }
+
+    // Validate state
+    const state = document.getElementById('state').value;
+    if (!state) {
+        document.getElementById('stateAddError').textContent = 'State cannot be null.';
+        valid = false;
+    }
+
+    // Prevent form submission if validation fails
+    if (!valid) {
+        event.preventDefault();
+    }
+});
+</script>
 
 {% endblock %}

@@ -57,12 +57,57 @@
                                     <i class="fa fa-star"></i>
                                 {% endfor %}
                             </div>
-                            {% if productinfo.offerprice %}
-                                         
-                                         <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ productinfo.offerprice|floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ productinfo.product_price |floatformat:0 }}</span></div>
-                                         {% else %}
-                                         <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ productinfo.product_price |floatformat:0 }} </div>
-                                {% endif %}
+                            
+                            {% if productinfo.offerprice > 0 and productinfo.catoffer > 0 %}
+                            {% if productinfo.offerprice < productinfo.catoffer %}
+                                <div class="price">
+                                    <i class="fa-solid fa-indian-rupee-sign"></i> 
+                                    {{ productinfo.offerprice|floatformat:0 }} 
+                                    <span>
+                                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                                        {{ productinfo.product_price|floatformat:0 }}
+                                    </span>
+                                </div>
+                            {% else %}
+                                <div class="price">
+                                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                                    {{ productinfo.catoffer|floatformat:0 }}
+                                    <span>
+                                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                                        {{ productinfo.product_price|floatformat:0 }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        {% elif productinfo.offerprice > 0 %}
+                            <div class="price">
+                                <i class="fa-solid fa-indian-rupee-sign"></i>
+                                {{ productinfo.offerprice|floatformat:0 }}
+                                <span>
+                                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                                    {{ productinfo.product_price|floatformat:0 }}
+                                </span>
+                            </div>
+                        {% elif productinfo.catoffer > 0 %}
+                            <div class="price">
+                                <i class="fa-solid fa-indian-rupee-sign"></i>
+                                {{ productinfo.catoffer|floatformat:0 }}
+                                <span>
+                                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                                    {{ productinfo.product_price|floatformat:0 }}
+                                </span>
+                            </div>
+                        {% else %}
+                            <div class="price">
+                                <i class="fa-solid fa-indian-rupee-sign"></i>
+                                {{ productinfo.product_price|floatformat:0 }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="category-name">
+                            <span>Category: {{ productinfo.category.category_name }}</span>
+                        </div>
+                      
+                        <br>
                             <div class="details">
                                 <p class="text-justify">
                                     {{ productinfo.product.product_description }}
@@ -82,13 +127,23 @@
                                 {% endif %}
                             </div>
                             <div class="quantity">
-                                {% if productinfo.offer %}
-
-                                <h4 style="color: green;">Offer: {{productinfo.offer.off_percent}} % </h4>
-
-
+                                {% if productinfo.offerprice > 0 and productinfo.catoffer > 0 %}
+                                    {% if productinfo.offerprice < productinfo.catoffer %}
+                                        <h4 style="color: green;">Offer: Product offer - {{ productinfo.offer.off_percent }} %</h4>
+                                    {% else %}
+                                        <h4 style="color: green;">Offer: Category offer - {{ productinfo.category.offer.off_percent }} %</h4>
+                                    {% endif %}
+                                {% elif productinfo.offerprice > 0 %}
+                                    <h4 style="color: green;">Offer: Product offer - {{ productinfo.offer.off_percent }} %</h4>
+                                {% elif productinfo.catoffer > 0 %}
+                                    <h4 style="color: green;">Offer: Category offer - {{ productinfo.category.offer.off_percent }} %</h4>
+                                {% else %}
+                                    <h4 style="color: green;">Offer: 0 %</h4>
                                 {% endif %}
                             </div>
+                            
+                            
+                            
 
                             
                             
@@ -117,7 +172,9 @@
                                 <a class="nav-link" data-toggle="pill" href="#specification">Specification</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" data-toggle="pill" href="#reviews">Reviews (1)</a>
+                              
+                                <a class="nav-link" data-toggle="pill" href="#reviews">Reviews   {% if review %} ({{ review|length }}) {% else %}  (0)  {% endif %}</a>
+                                
                             </li>
                         </ul>
 
@@ -149,6 +206,7 @@
                                     {% endfor %}
                                     
                                     </div>
+                                    <h6 style="font-weight:bold ;">{{reviews.title}}</h6>
                                     <p>
                                         {{reviews.text}}
                                     </p>
@@ -169,6 +227,9 @@
                                             {% csrf_token %}
                                             <div class="col-sm-6">
                                                 <input type="number" placeholder="Rating" min="0" max="5" step="1" name="rating" required>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <input type="text" placeholder="title" name="title" required>
                                             </div>
                                             <div class="col-sm-12">
                                                 <textarea placeholder="Review" name="review_desc"></textarea required>
@@ -218,7 +279,7 @@
                                 </div>
                             </div>
                             <div class="product-content">
-                                <div class="title"><a href="#">{{product.variant_name}}</a></div>
+                                <div class="title" ><a href="#" style="font-size: smaller;">{{product.variant_name}}</a></div>
                                 <div class="ratting">
                                     {% for _ in product.rating|default:0|star_range  %}
                                     <i class="fa fa-star"></i>
@@ -226,9 +287,9 @@
                                 </div>
                                 {% if product.offerprice %}
                                          
-                                <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.offerprice|floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
+                                <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.offerprice|floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
                                 {% else %}
-                                <div class="price"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                                <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
                                 {% endif %}
                             </div>
                         </div>

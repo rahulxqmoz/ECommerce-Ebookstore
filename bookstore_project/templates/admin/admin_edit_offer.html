@@ -3,36 +3,32 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Edit Offer</h2>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" method="post" enctype="multipart/form-data" id="offerForm">
         {% csrf_token %}
         <div class="mb-3">
             <label for="offerName" class="form-label">Offer Name</label>
-            <input type="text" class="form-control" value="{{ offer.name }}" id="offerName" name="offername" required>
+            <input type="text" class="form-control" value="{{ offer.name }}" id="offerName" name="offername">
+            <div class="invalid-feedback">Offer name cannot be empty.</div>
         </div>
         <div class="mb-3">
             <label for="offPercent" class="form-label">Off Percent</label>
-            <input type="number" class="form-control" id="offPercent" value="{{ offer.off_percent }}" name="offpercent" required>
-            
+            <input type="number" class="form-control" id="offPercent" value="{{ offer.off_percent }}" name="offpercent" >
+            <div class="invalid-feedback">Off percent cannot be empty and it is restricted upto 50%.</div>
         </div>
         <div class="mb-3">
             <div class="row">
-                
                 <div class="col-md-6">
                     <label for="customDate" class="form-label">Valid From</label>
-                    
-                     <input type="date" id="customDate" value="{{ offer.start_date | date:'Y-m-d' }}" class="form-control" name="valid_from" required>
+                    <input type="date" id="customDate" value="{{ offer.start_date | date:'Y-m-d' }}" class="form-control" name="valid_from" required>
+                    <div class="invalid-feedback">Valid from date cannot be empty and should not be in the past.</div>
                 </div>
                 <div class="col-md-6">
                     <label for="customDateTo" class="form-label">Valid To</label>
                     <input type="date" id="customDateTo" value="{{ offer.end_date | date:'Y-m-d' }}" class="form-control"  name="valid_to" required>
+                    <div class="invalid-feedback">Valid to date cannot be empty and should not be in the past or before valid from date.</div>
                 </div>
             </div>
-           
         </div>
-       
-      
-
-       
         <button type="submit" class="btn btn-primary">Update</button>
         <div class="container">
             <div class="row justify-content-center align-items-center">
@@ -45,9 +41,44 @@
                 </div>
             </div>
         </div>
-        
     </form>
 </div>
 
+<script>
+    // Form validation using JavaScript
+    document.getElementById('offerForm').addEventListener('submit', function(event) {
+        // Validate Offer Name
+        var offerName = document.getElementById('offerName').value;
+        if (!offerName) {
+            event.preventDefault();
+            document.getElementById('offerName').classList.add('is-invalid');
+            return;
+        } else {
+            document.getElementById('offerName').classList.remove('is-invalid');
+        }
+
+        // Validate Off Percent
+        var offPercent = parseFloat(document.getElementById('offPercent').value);
+        if (isNaN(offPercent) || offPercent <= 0 || offPercent > 50) {
+            event.preventDefault();
+            document.getElementById('offPercent').classList.add('is-invalid');
+            return;
+        } else {
+            document.getElementById('offPercent').classList.remove('is-invalid');
+        }
+
+        // Validate Valid From and Valid To Dates
+        var validFrom = new Date(document.getElementById('customDate').value);
+        var validTo = new Date(document.getElementById('customDateTo').value);
+        var today = new Date();
+        if (validTo === 'Invalid Date' || validTo < today || validTo < validFrom) {
+            event.preventDefault();
+            document.getElementById('customDateTo').classList.add('is-invalid');
+            return;
+        } else {
+            document.getElementById('customDateTo').classList.remove('is-invalid');
+        }
+    });
+</script>
 
 {% endblock %}

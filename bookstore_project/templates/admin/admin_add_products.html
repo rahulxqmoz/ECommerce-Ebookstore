@@ -3,11 +3,12 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Add Products</h2>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
         {% csrf_token %}
         <div class="mb-3">
             <label for="productName" class="form-label">Product Title</label>
-            <input type="text" class="form-control" id="productsName" name="productname" required>
+            <input type="text" class="form-control" id="productName" name="productname" maxlength="255">
+            <small id="nameError" class="text-danger"></small>
         </div>
         <div class="mb-3">
             <label for="productDesc" class="form-label">Product Description</label>
@@ -15,16 +16,51 @@
         </div>
         <div class="mb-3">
             <label for="productImage" class="form-label">Product Image</label>
-            <input type="file" class="form-control" id="productImage" name="productimage" accept="image/*" required>
+            <input type="file" class="form-control" id="productImage" name="productimage" accept=".jpg, .jpeg, .png">
+            <small id="imageError" class="text-danger"></small>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
-        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-        </span></div>
+        <div class="row d-flex justify-content-center" style="align-items: center">
+            <span class="text-danger fw-5">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </span>
+        </div>
     </form>
 </div>
 
+<script>
+function validateForm() {
+    var productName = document.getElementById("productName").value;
+    var productImage = document.getElementById("productImage").value;
+    var nameError = document.getElementById("nameError");
+    var imageError = document.getElementById("imageError");
+    var nameRegex = /^[a-zA-Z\s]*$/;
 
+    nameError.innerHTML = "";
+    imageError.innerHTML = "";
+
+    if (!productName.trim()) {
+        nameError.innerHTML = "Product name is required.";
+        return false;
+    } else if (!nameRegex.test(productName)) {
+        nameError.innerHTML = "Product name should not contain numbers.";
+        return false;
+    }
+    if (!productImage) {
+        imageError.innerHTML = "Product image is required.";
+        return false;
+    }
+    if (productImage.trim()) {
+        var extension = productImage.substring(productImage.lastIndexOf('.') + 1).toLowerCase();
+        if (extension !== "jpg" && extension !== "jpeg" && extension !== "png") {
+            imageError.innerHTML = "Please upload a JPG, JPEG, or PNG file.";
+            return false;
+        }
+    }
+
+    return true;
+}
+</script>
 {% endblock %}

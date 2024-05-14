@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal,ROUND_HALF_UP
 from django.contrib import messages
 from django.shortcuts import render,redirect
 import pdb
@@ -96,14 +96,14 @@ def view_cart(request,id):
         else:
             user_id=CustomUser.objects.get(id=id)
             cartItem=CartItem.objects.filter(customer=user_id)
-            coupons=Coupon.objects.all().order_by('-id')
+            coupons=Coupon.objects.filter(is_active=True).order_by('-id')
             user_id = CustomUser.objects.get(id=request.user.id)
             cart_item = CartItem.objects.filter(customer=user_id).first() 
             cart_obj=Cart.objects.get(id=cart_item.cart.id)
             context={'cartitem':cartItem,'coupons':coupons,'couponobj':cart_obj}
     except Exception as e:
         print(e)
-        messages.error(request,'You have not added any items to cart yet!')
+        messages.error(request,'Your cart is empty!!')
         return redirect('index')        
     return render(request,'products/cart.html',context)
 
@@ -163,17 +163,89 @@ def update_cart_quantity(request):
                 cartitem = CartItem.objects.filter(customer=user)
             else:
                 user=CustomUser.objects.get(id=request.user.id)
-                cartitem = CartItem.objects.filter(customer=user)   
+                cartitem = CartItem.objects.filter(customer=user)
+            print('entered quanitty')
+            sub_total=0   
             if new_quantity!=0:
-                sub_total = int(cart_item.product.offerprice()) * new_quantity
+                print('entered new quantity')
+
+                if cart_item.product.offerprice() > 0 and cart_item.product.catoffer() > 0:
+                    if cart_item.product.offerprice() < cart_item.product.catoffer():
+                        sub_total=int(cart_item.product.offerprice()) * new_quantity
+                    else:
+                        sub_total=int(cart_item.product.catoffer()) * new_quantity
+                elif cart_item.product.offerprice() > 0:
+                    sub_total=int(cart_item.product.offerprice()) * new_quantity
+                elif cart_item.product.catoffer() > 0:
+                    sub_total=int(cart_item.product.catoffer()) * new_quantity 
+                else:
+                    sub_total=int(cart_item.product.product_price) * new_quantity     
+
+                    
+
+                # if cart_item.product.offer:
+                #     if not cart_item.product.offer.is_expired():
+                #         if cart_item.product.category.offer:
+                #             if not cart_item.product.category.offer.is_expired():
+                #                 if cart_item.product.offerprice() < cart_item.product.catoffer():
+                #                     sub_total=int(cart_item.product.offerprice()) * new_quantity
+                #                 else:
+                #                     sub_total=int(cart_item.product.catoffer()) * new_quantity
+                #             else:
+                #                 sub_total=int(cart_item.product.offerprice()) * new_quantity
+                                
+                #         else:
+                #             sub_total=int(cart_item.product.offerprice()) * new_quantity
+                #     else:
+                #         if cart_item.product.category.offer:
+                #             if not cart_item.product.category.offer.is_expired():
+                #                 sub_total=int(cart_item.product.catoffer()) * new_quantity
+                #         else:
+                #             sub_total=int(cart_item.product.product_price) * new_quantity  
+                # else:
+                #     print("entered else")
+                #     if cart_item.product.category.offer:
+                #         print("entered offer")
+                #         if not cart_item.product.category.offer.is_expired():
+                #             print("entered after expiry")
+                #             sub_total=int(cart_item.product.catoffer()) * new_quantity
+                #             print(sub_total)
+                #         else:
+                #             sub_total=int(cart_item.product.product_price) * new_quantity     
+                #     else:
+                #         sub_total=int(cart_item.product.product_price) * new_quantity  
             else:
-                sub_total=sum(int(item.product.offerprice()) * item.quantity for item in cart_item)    
+                sub_total = sum(
+                (
+                    (
+                        (int(item.product.offerprice()) if item.product.offerprice() < item.product.catoffer() else int(item.product.catoffer())) 
+                        if (item.product.offerprice() is not None and item.product.catoffer() is not None and item.product.offerprice() > 0 and item.product.catoffer() > 0)
+                        else (int(item.product.offerprice()) if item.product.offerprice() is not None and item.product.offerprice() > 0 else int(item.product.catoffer()) if item.product.catoffer() is not None and item.product.catoffer() > 0 else int(item.product.product_price))
+                    )
+                    if (item.product.offerprice() is not None and item.product.offerprice() > 0) or (item.product.catoffer() is not None and item.product.catoffer() > 0)
+                    else int(item.product.product_price)
+                ) * new_quantity 
+                for item in cart_item
+            )
+
+
+
+
+                #sub_total=sum(int(item.product.offerprice()) * item.quantity for item in cart_item)    
                 
             total_sub_total = cartitem.annotate(subtotal=F('product__product_price') * F('quantity'))
             total_sum = total_sub_total.aggregate(total_sum=Sum('subtotal'))
             user_id = CustomUser.objects.get(id=request.user.id)
             cart_item = CartItem.objects.filter(customer=user_id)
-            total = sum(int(item.product.offerprice()) * item.quantity for item in cart_item)
+            total = sum(Decimal(item.sub_total()) for item in cart_item)
+            # total = total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            total=int(total)
+            print('total')
+            print(sub_total)
+            print(total)
+            print(total_sum['total_sum'])
+
+
 
             discount_amount=0
             tax=0
@@ -193,12 +265,17 @@ def update_cart_quantity(request):
                 if cart_obj.coupon.min_amount > total:
                     return JsonResponse({'error': f'Total product price should be greater than {cart_obj.coupon.min_amount}'})
                 discount_amount = total * int(cart_obj.coupon.off_percent) / 100
+                
                 if discount_amount > cart_obj.coupon.max_discount:
                     discount_amount = cart_obj.coupon.max_discount
+               
+                if discount_amount > 0.7 * total:
+                    discount_amount= 0.7 * total     
                 
             #add coupons
             try:
                 get_coupon = Coupon.objects.get(coupon_code=coupon_code)
+                
             except Coupon.DoesNotExist:
                 get_coupon = None
             if get_coupon:
@@ -210,33 +287,39 @@ def update_cart_quantity(request):
                 discount_amount = total * int(get_coupon.off_percent) / 100
                 if discount_amount > get_coupon.max_discount:
                     discount_amount = get_coupon.max_discount
+                if discount_amount > 0.7 * total:
+                    discount_amount= 0.7 * total 
+                print(discount_amount) 
+                print(0.7 * total)            
                 cart_obj.save()
                 couponcode=f'Applied coupon code {get_coupon.coupon_code} successfully'
                 alreadycouponexists=True
 
             #Calculating Category offer
-            cat_ofr_obj = CartItem.objects.filter(cart=cart_obj)
-            print("cat expired")
-            for items in cat_ofr_obj:
-                if not items.product.category.offer.is_expired():
-                    category_offeramount+=items.sub_total_with_category_offer()
-                else:
-                    category_offeramount+=0    
+            # cat_ofr_obj = CartItem.objects.filter(cart=cart_obj)
+            # print("cat expired")
+            # for items in cat_ofr_obj:
+            #     if not items.product.category.offer.is_expired():
+            #         category_offeramount+=items.sub_total_with_category_offer()
+            #     else:
+            #         category_offeramount+=0    
             print("cat after")        
             #Calculating total amount 
             discount = total_sum['total_sum'] - total
             shipping=0
             if category_offeramount > 0 :
                 total=total-category_offeramount
-            if total < 1000:
-                shipping=99
-                total=total+shipping
-            else:
-                shipping=0     
+              
+            
             total=total-discount_amount
             if total >0:
                 tax = (total * 3) // 100 
                 total=total+tax
+            if total < 1000:
+                shipping=99
+                total=total+shipping
+            else:
+                shipping=0         
             user_id = CustomUser.objects.get(id=request.user.id)
             cart_item = CartItem.objects.filter(customer=user_id).first() 
             cart_obj=Cart.objects.get(id=cart_item.cart.id)
@@ -277,7 +360,8 @@ def place_order(request,id):
         callback= "http://" + "127.0.0.1:8000" + "/cart/place_order/{}".format(add_id)
         payment_method = request.GET.get('payment_method')
         razorpay_id=request.GET.get('razor_id')
-        useraddress=UserAddress.objects.get(id=id)
+        #useraddress=UserAddress.objects.get(id=id)
+       
         user=CustomUser.objects.get(id=request.user.id)
         cartitem=CartItem.objects.filter(customer=user)
         cart_obj_get = CartItem.objects.filter(customer=user).first()
@@ -293,6 +377,9 @@ def place_order(request,id):
         shipping_cost=0
         coupon_discount=0
         category_offeramount=0
+
+        
+
         #discount amount
         for cart in cartitem:
             withoffer += int(cart.sub_total())   
@@ -310,10 +397,10 @@ def place_order(request,id):
             if coupon_discount>0:
                 withoffer=withoffer-coupon_discount  
         #Calculating Category offer
-        cat_ofr_obj = CartItem.objects.filter(cart=cart_obj)
-        for items in cat_ofr_obj:
-            if not items.product.category.offer.is_expired():
-                category_offeramount+=items.sub_total_with_category_offer()           
+        # cat_ofr_obj = CartItem.objects.filter(cart=cart_obj)
+        # for items in cat_ofr_obj:
+        #     if not items.product.category.offer.is_expired():
+        #         category_offeramount+=items.sub_total_with_category_offer()           
         #tax           
         tax=cart_obj.tax
         if tax>0:
@@ -322,11 +409,88 @@ def place_order(request,id):
             shipping_cost=99
             withoffer=withoffer+shipping_cost 
         if category_offeramount>0:
-            withoffer=withoffer-category_offeramount     
+            withoffer=withoffer-category_offeramount
+        #validating user address    
+        try:
+            useraddress = UserAddress.objects.get(id=id)
+        except UserAddress.DoesNotExist:
+            if payment_method == 'razorpay':
+                user.wallet+=Decimal(withoffer)
+                wallet = WalletBook.objects.create(
+                customer=user,
+                description="Amount received due to the failure of order!",
+                increment=True,
+                amount=str(withoffer)
+                )
+                user.save()
+                messages.error(request, f'Unfortunatelly your order has been failed!!.Your amount Rs. {withoffer} will be credited to your wallet.Reason-User Address not found! Create a new one or select another address.')
+                return redirect('checkout_address')
+            messages.error(request, 'User Address not found! Create a new one or select another address.')
+            return redirect('checkout_address')    
+        context={
+                'address':useraddress,
+                 'cartitem':cartitem,
+                 'withoffer':withoffer,
+                 'withoutoffer':withoutoffer,
+                 'discount_amount':discount_amount,
+                 'coupon_amount':coupon_discount,
+                 'tax':tax,
+                 'shipping':shipping_cost,
+                 'add_id':add_id,
+                 'payment':payments,
+                 'order_id':order_id,
+                 'orders':order,
+                 'callback_url':callback,
+                 'category_offeramount':category_offeramount
+                }    
+
+        #checking stock
+        for item in cartitem:
+            if item.quantity>item.product.stock:
+                messages.error(request,f'Only stock {item.product.stock} left for {item.product.variant_name}!Reduce Quantity from cart or Try Later!.')
+                return redirect('place_order',context)    
+
+        if request.method == "GET":
+            # Check if payment failed
+            payment_failed = request.GET.get('payment_failed', False)
+            if payment_failed:
+                error_code = request.GET.get('error_code')
+                error_description = request.GET.get('error_description')
+                # Handle the error message accordingly
+                messages.error(request, f"Payment failed. Error code: {error_code}. Description: {error_description} !!")        
        
         #payment razorpay 
         if payment_method == 'razorpay':
-                print("Entered to method")
+                try:
+                    useraddress = UserAddress.objects.get(id=id)
+                except UserAddress.DoesNotExist:
+                    user.wallet+=Decimal(withoffer)
+                    wallet = WalletBook.objects.create(
+                    customer=user,
+                    description="Amount received due to the failure of order!",
+                    increment=True,
+                    amount=str(withoffer)
+                    )
+                    user.save()
+                    messages.error(request, f'Unfortunatelly your order has been failed!!.Your amount Rs. {withoffer} will be credited to your wallet.Reason-User Address not found! Create a new one or select another address.')
+                    return redirect('checkout_address')
+                
+                for item in cartitem:
+                    try:
+                        product_obj = Product_variant.objects.get(id=item.product.id,is_active=False)
+                        user.wallet+=Decimal(withoffer)
+                        wallet = WalletBook.objects.create(
+                        customer=user,
+                        description="Amount received due to the failure of order!",
+                        increment=True,
+                        amount=str(withoffer)
+                        )
+                        user.save()
+                      
+                        messages.error(request,f'Apologies!!Unfortunatelly your order has been failed!!.Your amount Rs. {withoffer} will be credited to your wallet.Reason :- {product_obj.variant_name} is not available for sale now.Try again Later!!.')
+                        return redirect('place_order',context)
+                    except Product_variant.DoesNotExist:
+                        pass 
                 my_order = Order()
                 my_order.user = user
                 my_order.address = useraddress
@@ -364,13 +528,14 @@ def place_order(request,id):
                 # creating order items
                 for item in cartitem:
                     product_obj = Product_variant.objects.get(id=item.product.id)
+                    productprice=product_obj.price_sub_total()
                     order_item = OrderProduct.objects.create(
                         customer=user,
                         order_id=my_order,
                         payment_id=payment.id,
                         product=product_obj,
                         quantity=item.quantity,
-                        product_price=item.product.product_price,
+                        product_price=productprice,
                         ordered=True,
                     )
                     product_obj.stock = product_obj.stock - item.quantity
@@ -394,6 +559,25 @@ def place_order(request,id):
         if request.method=="POST":
             paymentMethod=request.POST.get('payment')
             if paymentMethod is not None and paymentMethod.strip() != '':
+
+                try:
+                    useraddress = UserAddress.objects.get(id=id)
+                except UserAddress.DoesNotExist:
+                    messages.error(request, 'User Address not found! Create a new one or select another address.')
+                    return redirect('checkout_address')
+                
+                for item in cartitem:
+                    try:
+                        product_obj = Product_variant.objects.get(id=item.product.id,is_active=False)
+                        messages.error(request,f'Apologies!!{product_obj.variant_name} is not available for sale now.Try again Later!!.')
+                        return redirect('place_order',context)
+                    except Product_variant.DoesNotExist:
+                        pass 
+
+                if paymentMethod == "cod":
+                    if withoffer > 1000:
+                        messages.error(request,'Order above Rs.1000 is not allowed for Cash On Delivery.Use other payments options!')
+                        return redirect('place_order',id=id) 
                 my_order = Order()
                 my_order.user = user
                 my_order.address = useraddress
@@ -431,13 +615,14 @@ def place_order(request,id):
                 # creating order items
                 for item in cartitem:
                     product_obj = Product_variant.objects.get(id=item.product.id)
+                    productprice=product_obj.price_sub_total()
                     order_item = OrderProduct.objects.create(
                         customer=user,
                         order_id=my_order,
                         payment_id=payment.id,
                         product=product_obj,
                         quantity=item.quantity,
-                        product_price=item.product.product_price,
+                        product_price=productprice,
                         ordered=True,
                     )
                     product_obj.stock = product_obj.stock - item.quantity

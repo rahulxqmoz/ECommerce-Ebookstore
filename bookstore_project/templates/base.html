@@ -140,11 +140,11 @@
 
                     <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
                         <div class="navbar-nav m-auto">
-                            <a href="{% url 'index' %}" class="nav-item nav-link active">Home</a>
-                            <a href="{% url 'browse_products' %}" class="nav-item nav-link">Products</a>
+                            <a href="{% url 'index' %}" class="nav-item nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
+                            <a href="{% url 'browse_products' %}" class="nav-item nav-link {% if request.path == '/browse_products/' %}active{% endif %}">Products</a>
                             
                             <div class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Category</a>
+                                <a href="#" class="nav-link dropdown-toggle  {% if request.resolver_match.url_name == 'category_wise' %}active{% endif %}" data-toggle="dropdown">Category</a>
                                 <div class="dropdown-menu">
                                     {% if category %}
                                     {% for cat in category %}
@@ -154,10 +154,10 @@
                                 </div>
                             </div>
                             {% if request.user.is_authenticated and not user.is_superuser %}
-                            <a href="{% url 'user_profile' %}" class="nav-item nav-link">My Profile</a>
+                            <a href="{% url 'user_profile' %}" class="nav-item nav-link {% if request.path == '/user_profile/' %}active{% endif %}">My Profile</a>
                             {% endif %}
 
-                            <a href="#" class="nav-item nav-link">Contact Us</a>
+                            <a href="{% url 'contact' %}" class="nav-item nav-link {% if request.path == '/contact/' %}active{% endif %}">Contact Us</a>
                         </div>
                     </div>
                 </nav>
@@ -177,47 +177,9 @@
         <!-- Footer Start -->
         <div class="footer">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
-                            <h1>E Shop</h1>
-                            <p>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sollicitudin rutrum massa. Suspendisse sollicitudin rutrum massa. Vestibulum porttitor, metus sed pretium elementum, nisi nibh sodales quam, non lobortis neque felis id mauris.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
-                            <h3 class="title">Useful Pages</h3>
-                            <ul>
-                                <li><a href="product.html">Product</a></li>
-                                <li><a href="product-detail.html">Product Detail</a></li>
-                                <li><a href="cart.html">Cart</a></li>
-                                <li><a href="checkout.html">Checkout</a></li>
-                                <li><a href="login.html">Login & Register</a></li>
-                                <li><a href="#">My Account</a></li>
-                               
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
-                            <h3 class="title">Quick Links</h3>
-                            <ul>
-                                <li><a href="product.html">Product</a></li>
-                                <li><a href="cart.html">Cart</a></li>
-                                <li><a href="checkout.html">Checkout</a></li>
-                                <li><a href="login.html">Login & Register</a></li>
-                                <li><a href="my-account.html">My Account</a></li>
-                                <li><a href="wishlist.html">Wishlist</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
+                <div class="row">                 
+                    <div class="col-lg-3 col-md-6 mx-auto">
+                        <div class="footer-widget text-center">
                             <h3 class="title">Get in Touch</h3>
                             <div class="contact-info">
                                 <p><i class="fa fa-map-marker"></i>123 E Shop, Los Angeles, CA, USA</p>
@@ -253,6 +215,7 @@
                 </div>
             </div>
         </div>
+        
         <!-- Footer End -->
 
         

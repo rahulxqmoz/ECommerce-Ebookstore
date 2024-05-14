@@ -3,36 +3,36 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Add Coupon</h2>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" method="post" id="couponForm" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
             <label for="couponCode" class="form-label">Coupon Code</label>
-            <input type="text" class="form-control" id="couponCode" name="couponcode" required>
+            <input type="text" class="form-control" id="couponCode" name="couponcode">
         </div>
         
         <div class="mb-3">
             <label for="minAmount" class="form-label">Minimum Amount</label>
-            <input type="number" class="form-control" id="minAmount" name="minamount" required>
+            <input type="number" class="form-control" id="minAmount" name="minamount" >
         </div>
 
         <div class="mb-3">
             <label for="offPercent" class="form-label">Off Percent</label>
-            <input type="number" class="form-control" id="offPercent" name="offpercent" required>
+            <input type="number" class="form-control" id="offPercent" name="offpercent" >
         </div>
 
         <div class="mb-3">
             <label for="maxDiscount" class="form-label">Maximum Discount</label>
-            <input type="number" class="form-control" id="maxDisxount" name="maxdiscount" required>
+            <input type="number" class="form-control" id="maxDiscount" name="maxdiscount" >
         </div>
 
        
         <div class="mb-3">
             <label for="couponStock" class="form-label">Coupon Stock</label>
-            <input type="number" class="form-control" id="couponStock" name="couponstock" required>
+            <input type="number" class="form-control" id="couponStock" name="couponstock" >
         </div>
         <div class="mb-3">
             <label for="expiryDate" class="form-label">Expiry Date</label>
-             <input type="date" id="expiryDate" class="form-control" name="expirydate" required>
+             <input type="date" id="expiryDate" class="form-control" name="expirydate" >
         </div>
 
         <button type="submit" class="btn btn-primary">Submit</button>
@@ -43,6 +43,69 @@
         </span></div>
     </form>
 </div>
+<script>
+    // Form validation using JavaScript
+    document.getElementById('couponForm').addEventListener('submit', function(event) {
+        // Validate Coupon Code
+        var couponCode = document.getElementById('couponCode').value.trim();
+        if (couponCode === '') {
+            alert('Coupon code cannot be empty');
+            event.preventDefault();
+            return;
+        }
+
+        // Validate Off Percent
+        var offPercent = parseFloat(document.getElementById('offPercent').value);
+        if (isNaN(offPercent) || offPercent < 0 || offPercent > 70) {
+            alert('Off percent must be a number between 0 and 70');
+            event.preventDefault();
+            return;
+        }
+
+        // Validate Max Discount
+        var maxDiscount = parseFloat(document.getElementById('maxDiscount').value);
+        if (isNaN(maxDiscount) || maxDiscount < 0) {
+            alert('Maximum discount must be a non-negative number');
+            event.preventDefault();
+            return;
+        }
+        if (maxDiscount > 2000) {
+            alert('Maximum amount restricted to 2000');
+            event.preventDefault();
+            return;
+        }
+        var minAmount = parseFloat(document.getElementById('minAmount').value);
+        if (isNaN(minAmount) || minAmount < 0) {
+            alert('Mininum amount must be a non-negative number');
+            event.preventDefault();
+            return;
+        }
+        if (minAmount < 500) {
+            alert('Minimum amount must be greater than 500');
+            event.preventDefault();
+            return;
+        }
+
+        // Validate Coupon Stock
+        var couponStock = parseFloat(document.getElementById('couponStock').value);
+        if (isNaN(couponStock) || couponStock < 0) {
+            alert('Coupon stock must be a non-negative number');
+            event.preventDefault();
+            return;
+        }
+
+        // Validate Expiry Date
+        var expiryDate = new Date(document.getElementById('expiryDate').value);
+        var currentDate = new Date();
+        if (expiryDate < currentDate) {
+            alert('Expiry date cannot be in the past');
+            event.preventDefault();
+            return;
+        }
+    });
+</script>
+
+
 
 
 {% endblock %}

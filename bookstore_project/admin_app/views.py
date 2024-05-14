@@ -1,10 +1,14 @@
 import calendar
 from datetime import datetime, timedelta
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils.text import slugify
+from decimal import Decimal
 import os
 from calendar import month_name
 import uuid
+from django.conf import settings
 from django.shortcuts import get_object_or_404, render,redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate,login,logout
 from django.contrib import messages
 from django.views.decorators.cache import cache_control
@@ -18,6 +22,7 @@ from django.db.models import Sum,Count,Q,F
 from django.utils import timezone
 from django.db.models.functions import ExtractYear,ExtractMonth
 from django.db.models.functions import Coalesce
+from django.core.mail import send_mail
 # Create your views here.
 
 
@@ -57,7 +62,7 @@ def admin_dashboard(request):
     context={}
     orders=[0]*12
     try:
-        orders = Order.objects.all().order_by('-id')
+        orders = OrderProduct.objects.all().order_by('-id')
         order_count = orders.count()
         order_total = Order.objects.aggregate(total=Sum('order_total'))['total']
         today = date.today()
@@ -81,7 +86,7 @@ def admin_dashboard(request):
                 date_to -= timedelta(seconds=1)  # Go back one second to reach the end of the selected day
 
                 # Filter orders within the specified range
-                orders = Order.objects.filter(created__range=(date_from, date_to))
+                orders = OrderProduct.objects.filter(order_id__created__range=(date_from, date_to))
             except:
                 pass
         # weekly sales data
@@ -164,6 +169,11 @@ def admin_dashboard(request):
         # Print or use the most ordered books
         book_names = [item['product__product__product_title'] for item in most_ordered_books]
         quantities = [item['total_quantity'] for item in most_ordered_books]
+        most_ordered_category_books = OrderProduct.objects.values('product__category__category_name').annotate(
+        total_quantity=Coalesce(Sum('quantity'), 0)).order_by('-total_quantity')
+        # Extract data for plotting
+        category_book_names = [item['product__category__category_name'] for item in most_ordered_category_books]
+        cat_quantities = [item['total_quantity'] for item in most_ordered_category_books]
         current_year_start = datetime(datetime.now().year, 1, 1)
         yearly_order_totals = (
                 Order.objects
@@ -205,7 +215,10 @@ def admin_dashboard(request):
                 'quantities': quantities,
                 'yearly_order_totals':yearly_order_totals,
                 'chart_data':chart_data,
-                'all_years' :all_years
+                'all_years' :all_years,
+                'category_book_names':category_book_names,
+                'cat_quantities':cat_quantities
+
             }
     except Exception as e:
         print(e)    
@@ -214,6 +227,61 @@ def admin_dashboard(request):
 def admin_logout(request):
     logout(request)
     return redirect('admin_login')
+
+def sales_report_view(request):
+    context={}
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        # Convert string dates to datetime objects
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+        # Adjust end date to include the entire day
+        end_date += timedelta(days=1)
+
+        orders = Order.objects.filter(
+            created__range=(start_date, end_date)
+        )
+   
+
+        order_report = []
+
+        # Calculate total sales revenue and total discount
+        total_sales_revenue = orders.aggregate(total_sales=Sum('order_total'))['total_sales'] or 0
+        total_discount = orders.aggregate(
+            total_discount=Sum('discount_amount') + Sum('coupon_amount')
+        )['total_discount'] or 0
+
+        discount_amount = orders.aggregate(
+            discount_amount=Sum('discount_amount')
+        )['discount_amount'] or 0
+        coupon_amount = orders.aggregate(
+            coupon_amount=Sum('coupon_amount')
+        )['coupon_amount'] or 0
+
+        # Calculate total orders count
+        total_orders_count = orders.count()
+
+        order_report.append({
+            'start_date': start_date.strftime('%d-%m-%Y'),
+            'end_date': (end_date - timedelta(days=1)).strftime('%d-%m-%Y'),
+            'total_orders_count': total_orders_count,
+            'total_sales_revenue': total_sales_revenue,
+            'total_discount': total_discount,
+            'discount_amount':discount_amount,
+            'coupon_amount':coupon_amount
+        })
+        context={'order_report':order_report}
+        return render(request,'admin/admin_sales_report.html',context)
+
+    # Additional processing to generate per-day sales report if needed
+    # else:
+    #      # Default: Fetch all orders
+    #     orders = OrderProduct.objects.all()
+
+    return render(request,'admin/admin_sales_report.html')
 
 # User management  section---------------------------------------------------------------------------
 
@@ -252,55 +320,68 @@ def admin_user_manage(request, id):
 @staff_member_required(login_url='admin_login')
 def admin_category(request):
     try:
-        context={}
-        offers=Offer.objects.all().order_by('-id')
-        context={'offers':offers}
-        if request.method=='POST':
-            category_name=request.POST.get('categoryName')
-            category_slug=category_name.replace(" ","-")
-            category_discription=request.POST.get('categoryDescription')
-            category_offer=request.POST.get('offer')
-            cat_discount=request.POST.get('maxamount')
-            max_discount=None
-            cat_offer=None
-            offer_obj=Offer.objects.get(id=category_offer)
-            if category_offer is not '':
-                if offer_obj.is_expired():
-                        messages.error(request,'Offer expired')
-                        return redirect('admin_category',context)
-                else:
-                    cat_offer=offer_obj
-            else:
-                cat_offer=None 
-            if cat_discount is not '':
-                max_discount=cat_discount
-            else:
-                max_discount=None                   
-            
-            exitscat=Category.objects.filter(category_name__iexact=category_name)
-            if exitscat.exists():
-                messages.error(request,"Category already exits")
-                return redirect('admin_category',context)
-            category=Category(category_name=category_name,category_description=category_discription,slug=category_slug,offer=offer_obj,max_discount=max_discount)
-            
-            if request.FILES:
-                category.category_image=request.FILES['categoryImage']    
+        context = {}
+        offers = Offer.objects.all().order_by('-id')
+        context['offers'] = offers
 
+        if request.method == 'POST':
+            category_name = request.POST.get('categoryName')
+
+            # Check if category with the same name already exists
+            existing_category = Category.objects.filter(category_name__iexact=category_name).first()
+            if existing_category:
+                messages.error(request, f"Category '{category_name}' already exists!!")
+                return redirect('admin_category')
+
+            # Generate slug
+            category_slug = slugify(category_name)
+            while Category.objects.filter(slug=category_slug).exists():
+                category_slug += '-'
+
+            category_description = request.POST.get('categoryDescription')
+            category_offer_id = request.POST.get('offer')
+            cat_discount = request.POST.get('maxamount')
+
+            # Get offer object if it exists
+            if category_offer_id:
+                offer_obj = Offer.objects.get(id=category_offer_id)
+                if offer_obj.is_expired():
+                    messages.error(request, 'Offer expired')
+                    return redirect('admin_category')
+            else:
+                offer_obj = None
+
+            # Set max discount
+            max_discount = cat_discount if cat_discount else None
+
+            category = Category(
+                category_name=category_name,
+                category_description=category_description,
+                slug=category_slug,
+                offer=offer_obj,
+                max_discount=max_discount
+            )
+
+            if request.FILES:
+                category.category_image = request.FILES['categoryImage']
 
             category.save()
-            messages.success(request,"Category Added")
-            return redirect('admin_category',context)
-        context={'offers':offers}        
+            messages.success(request, "Category Added")
+            return redirect('admin_category_view')
+
     except Exception as e:
-        print(e)        
-    return render(request,'admin/admin_category.html',context)
+        print(e)
+        messages.error(request, "Category add failed")
+
+    return render(request, 'admin/admin_category.html', context)
+
 
 @cache_control(no_cache=True, no_store=True)
 @staff_member_required(login_url='admin_login')
 def admin_category_view(request):
     context = {}
     try:
-        category = Category.objects.all().order_by('id')
+        category = Category.objects.all().order_by('-id')
         context = {
             'category': category,
         }
@@ -313,47 +394,63 @@ def admin_category_view(request):
 
 @cache_control(no_cache=True, no_store=True)
 @staff_member_required(login_url='admin_login')
-def admin_edit_category(request,id):
-    context ={}
+def admin_edit_category(request, id):
+    context = {}
 
     try:
-        offers=Offer.objects.all().order_by('-id')
+        offers = Offer.objects.all().order_by('-id')
         category = Category.objects.get(id=id)
-        context={'category':category,'offers':offers}
-        if request.method=="POST":
+        context = {'category': category, 'offers': offers}
+        
+        if request.method == "POST":
+            new_category_name = request.POST.get('name').strip()
+            new_category_description = request.POST.get('description')
+            new_category_offer_id = request.POST.get('offer')
+            new_category_max_discount = request.POST.get('maxamount')
+
+            if Decimal(new_category_max_discount) <=0 :
+                messages.error(request, "Maximum discount cant be negative")
+                return redirect('admin_edit_category', id=id)
+
+
             if request.FILES:
                 os.remove(category.category_image.path)
-                category.category_image=request.FILES['image']   
-            
-            category.category_name=request.POST.get('name') 
-            category.category_description=request.POST.get('description')
-            category_offer=request.POST.get('offer')
-            cat_discount=request.POST.get('maxamount')
-            if cat_discount != '':
-                category.max_discount=cat_discount
-            if category_offer != '':
-                cat_offer=''
-                offer_obj=Offer.objects.get(id=category_offer)
+                category.category_image = request.FILES['image']
+
+            # Check if the category name has changed
+            if new_category_name != category.category_name:
+                exitscat = Category.objects.filter(category_name__iexact=new_category_name)
+                if exitscat.exists():
+                    messages.error(request, "Category already exists")
+                    return redirect('admin_edit_category', id=id)
+
+            category.category_name = new_category_name
+            category.category_description = new_category_description
+
+            if new_category_max_discount != '':
+                category.max_discount = new_category_max_discount
+
+            # Check if a new offer has been selected
+            if new_category_offer_id != '':
+                offer_obj = Offer.objects.get(id=new_category_offer_id)
                 if offer_obj.is_expired():
-                        messages.error(request,'Offer expired')
-                        return redirect('admin_edit_category',id=id)
+                    messages.error(request, 'Offer expired')
+                    return redirect('admin_edit_category', id=id)
                 else:
-                    cat_offer=offer_obj 
-                category.offer=cat_offer
-
+                    category.offer = offer_obj
             else:
-                print('null entered')
-                category.offer=None    
+                category.offer = None
+
             category.save()
-            messages.success(request,"Edited Successfully")
+            messages.success(request, "Edited Successfully")
             return redirect('admin_category_view')
-        return render(request,'admin/admin_edit_category.html',context)
 
-
+        return render(request, 'admin/admin_edit_category.html', context)
 
     except Exception as e:
-        print(e)    
+        print(e)
         return redirect('admin_category_view')
+
     
 
 @cache_control(no_cache=True, no_store=True)
@@ -386,7 +483,7 @@ def admin_delete_category(request,id):
 def admin_author(request):
     context = {}
     try:
-        author = Author.objects.all().order_by('id')
+        author = Author.objects.all().order_by('-id')
         context = {
             'author': author,
         }
@@ -405,7 +502,7 @@ def admin_add_author(request):
             token = str(uuid.uuid4())
             author_slug=token
             author_description=request.POST.get('authordesc')
-            existauthor=Category.objects.filter(category_name__iexact=author_name)
+            existauthor=Author.objects.filter(author_name__iexact=author_name)
             if existauthor.exists():
                 messages.error(request,"Author already exits")
                 return redirect('admin_add_author')
@@ -417,7 +514,7 @@ def admin_add_author(request):
 
             author.save()
             messages.success(request,"Author Added")
-            return redirect('admin_add_author')
+            return redirect('admin_author')
             
     except Exception as e:
         print(e)
@@ -439,7 +536,13 @@ def admin_edit_author(request,id):
                 os.remove(author.author_image.path)
                 author.author_image=request.FILES['image']   
          
-            author.author_name=request.POST.get('name') 
+            author_name=request.POST.get('name').strip() 
+            if author_name != author.author_name:
+                exitscat = Author.objects.filter(author_name=author_name)
+                if exitscat.exists():
+                    messages.error(request, "Author already exists")
+                    return redirect('admin_edit_author', id=id)
+            author.author_name=request.POST.get('name')     
             author.author_description=request.POST.get('description')
 
             author.save()
@@ -497,7 +600,7 @@ def admin_add_offer(request):
             offer=Offer(name=offer_name,off_percent=off_percent,start_date=validFrom,end_date=validTo)
             offer.save()
             messages.success(request,"offer Added")
-            return redirect('admin_add_offer')
+            return redirect('admin_offer')
             
     except Exception as e:
         
@@ -511,7 +614,7 @@ def admin_add_offer(request):
 def admin_offer(request):
     context = {}
     try:
-        offer = Offer.objects.all().order_by('id')
+        offer = Offer.objects.all().order_by('-id')
         context = {
             'offer': offer,
         }
@@ -530,7 +633,13 @@ def admin_edit_offer(request,id):
         if request.method=="POST":
                
 
-            offer.name=request.POST.get('offername') 
+            offer_name=request.POST.get('offername') 
+            if offer_name != offer.name:
+                exitscat = Offer.objects.filter(name=offer_name)
+                if exitscat.exists():
+                    messages.error(request, "Offer already exists")
+                    return redirect('admin_edit_offer', id=id)
+            offer.name =request.POST.get('offername')     
             offer.off_percent=request.POST.get('offpercent')
 
             offer.start_date=request.POST.get('valid_from')
@@ -580,9 +689,9 @@ def admin_add_product(request):
     try:
         if request.method=="POST":
             product_name=request.POST.get('productname')
-            product=Products.objects.filter(product_title__iexact=product_name)
+            product=Products.objects.filter(product_title__iexact=product_name).first()
             token=product_name.replace(" ","-")
-            if product.exists():
+            if product:
                 messages.error(request,"Prodcut already exists!!")
                 return redirect('admin_add_product')
             
@@ -610,7 +719,7 @@ def admin_add_product(request):
 def admin_product(request):
     context = {}
     try:
-        products = Products.objects.all().order_by('id')
+        products = Products.objects.all().order_by('-id')
         context = {
             'products': products,
         }
@@ -627,11 +736,26 @@ def admin_product_edit(request,id):
         product = Products.objects.get(id=id)
         context={'product':product}
         if request.method=="POST":
+
+
+            product_name= request.POST.get('name').strip()
+            if product_name != product.product_title:
+                exitscpro = Products.objects.filter(product_title=product_name)
+                if exitscpro.exists():
+                    messages.error(request, "Product already exists")
+                    return redirect('admin_product_edit', id=id)
+
             if request.FILES:
                 os.remove(product.product_image.path)
-                product.product_image=request.FILES['image']   
+                product.product_image=request.FILES['image']  
+
+           
+
+
 
             product.product_title=request.POST.get('name') 
+             # Check if the category name has changed
+           
             product.product_description=request.POST.get('description')
 
             product.save()
@@ -678,7 +802,7 @@ def admin_product_delete(request,id):
 def admin_edition(request):
     context = {}
     try:
-        editions = Editions.objects.all().order_by('id')
+        editions = Editions.objects.all().order_by('-id')
         context = {
             'editions': editions,
         }
@@ -693,16 +817,18 @@ def admin_edition(request):
 def admin_add_edition(request):
     try:
         if request.method=='POST':
-            edition_name=request.POST.get('editioname')
+            edition_name=request.POST.get('editioname').strip()
+            print(edition_name)
+            existedition=Editions.objects.filter(editons_name__iexact=edition_name).first()
+            if existedition:
+                messages.error(request,"Edition already exits")
+                return redirect('admin_add_edition')
             token = edition_name.replace(" ","-")
             edition_slug=token
             edition_description=request.POST.get('editiondesc')
             year=request.POST.get('year')
             publisher=request.POST.get('publisher')
-            existedition=Editions.objects.filter(editons_name__iexact=edition_name)
-            if existedition.exists():
-                messages.error(request,"Edition already exits")
-                return redirect('admin_add_edition')
+            
             edition=Editions(editons_name=edition_name,edition_description=edition_description,slug=edition_slug,publication_year=year,publisher=publisher)
             
             
@@ -710,7 +836,7 @@ def admin_add_edition(request):
 
             edition.save()
             messages.success(request,"Edition Added")
-            return redirect('admin_add_edition')
+            return redirect('admin_edition')
             
     except Exception as e:
         print(e)
@@ -729,11 +855,17 @@ def admin_edit_edition(request,id):
         context={'edition':edition}
         if request.method=="POST":
               
-
+            edition_name=request.POST.get('name').strip() 
+            if edition_name != edition.editons_name:
+                exitsedit = Editions.objects.filter(editons_name=edition_name)
+                if exitsedit.exists():
+                    messages.error(request, "Edition already exists")
+                    return redirect('admin_edit_edition', id=id)
             edition.editons_name=request.POST.get('name') 
             edition.edition_description=request.POST.get('description')
             edition.publication_year=request.POST.get('year') 
             edition.publisher=request.POST.get('publisher')
+          
 
             edition.save()
             messages.success(request,"Edited Successfully")
@@ -779,27 +911,48 @@ def add_product_variant(request):
     context={}
 
     try:
-        products=Products.objects.all().order_by('id')
-        author=Author.objects.all().order_by('id')
-        offers=Offer.objects.all().order_by('id')
-        categories=Category.objects.all().order_by('id')
-        editions=Editions.objects.all().order_by('id')
+        products=Products.objects.filter(is_active=True).order_by('id')
+        author=Author.objects.filter(is_active=True).order_by('id')
+        offers=Offer.objects.filter(is_active=True).order_by('id')
+        categories=Category.objects.filter(is_active=True).order_by('id')
+        editions=Editions.objects.filter(is_active=True).order_by('id')
 
         if request.method=="POST":
             product=request.POST.get('product')
+           
+
             category=request.POST.get('category')
             auth=request.POST.get('author')
             offer=request.POST.get('offer')
             price=request.POST.get('price')
+            if int(price) < 0:
+                messages.error(request,'Price should not be less than Zero!!')
+                return redirect('admin_add_product_variant')    
+
             stock=request.POST.get('stock')
+            if int(stock) < 0:
+                messages.error(request,'Stock should not be less than Zero!!')
+                return redirect('admin_add_product_variant') 
             rating=request.POST.get('rating')
             edition=request.POST.get('edition')
 
             productobj=Products.objects.get(id=product)
             categoryobj=Category.objects.get(id=category)
             authprobj=Author.objects.get(id=auth)
-            offerobj=Offer.objects.get(id=offer)
+            if offer!='':
+                offerobj=Offer.objects.get(id=offer)
+            else:
+                offerobj=None   
             editionobj=Editions.objects.get(id=edition)
+            try:
+
+
+                variant = Product_variant.objects.get(product=productobj,author=authprobj,edition=editionobj)
+                
+                messages.error(request,"Variant already exists")
+                return redirect('admin_add_product_variant')
+            except Product_variant.DoesNotExist:
+                pass
 
             
             variant_name=f"{productobj.product_title} {authprobj.author_name} {editionobj.editons_name}"
@@ -812,6 +965,7 @@ def add_product_variant(request):
                 variant = Product_variant.objects.get(product=productobj,author=authprobj,edition=editionobj)
                 
                 messages.error(request,"Variant already exists")
+                return redirect('admin_add_product_variant')
             except Product_variant.DoesNotExist:
 
                 variant = Product_variant(
@@ -842,12 +996,12 @@ def add_product_variant(request):
 
                 except Exception as e:
                     print(e)
-                    messages.success(request,"Image Upload Failed") 
+                    messages.error(request,"Image Upload Failed") 
                     return redirect('admin_add_product_variant')  
                     
 
                 messages.success(request,"Product Variant Successfully added!")  
-                return redirect('admin_add_product_variant')  
+                return redirect('admin_productvariant')  
 
 
         context={
@@ -932,11 +1086,21 @@ def admin_edit_variant(request,id):
             stock=request.POST.get('stock')
             rating=request.POST.get('rating')
             edition=request.POST.get('edition')
+            if Decimal(price) < 0:
+                messages.error(request,'Price should not be less than Zero!!')
+                return redirect('admin_edit_variant')  
+            if int(stock) < 0:
+                messages.error(request,'Stock should not be less than Zero!!')
+                return redirect('admin_edit_variant')   
 
             productobj=Products.objects.get(id=product)
             categoryobj=Category.objects.get(id=category)
             authprobj=Author.objects.get(id=auth)
-            offerobj=Offer.objects.get(id=offer)
+            if offer!='nooffer' and offer!='':
+                offerobj=Offer.objects.get(id=offer)
+            else:
+                offerobj=None    
+            
             editionobj=Editions.objects.get(id=edition)
 
             variant.product=productobj
@@ -947,6 +1111,14 @@ def admin_edit_variant(request,id):
             variant.product_price=price
             variant.stock=stock
             variant.rating=rating
+
+            exitsproductvariant = Product_variant.objects.get(product=productobj,author=authprobj,edition=editionobj)
+            if exitsproductvariant != variant:
+                if exitsproductvariant:
+                    messages.error(request, "Product Variant already exists")
+                    return redirect('admin_edit_variant', id=id)    
+               
+                
            
             
             multiple_images = request.FILES.getlist('multipleImage', None)
@@ -1023,7 +1195,13 @@ def admin_add_coupon(request):
             couponstock=request.POST.get('couponstock')
             expiry_date_str = request.POST.get("expirydate")
 
-            
+            try:
+                existing_coupon = Coupon.objects.filter(coupon_code__iexact=couponcode)
+                
+                messages.error(request, "Coupon already exists!!")
+                return redirect('admin_add_coupon')
+            except Coupon.DoesNotExist:
+                pass
             
             # Validate coupon_code
             if couponcode and couponcode.islower():
@@ -1071,7 +1249,7 @@ def admin_add_coupon(request):
             
             
             messages.success(request,"Coupon Added")
-            return redirect('admin_add_coupon')
+            return redirect('admin_coupon')
             
     except Exception as e:
         
@@ -1120,7 +1298,7 @@ def admin_delete_coupon(request,id):
 def admin_edit_coupon(request, id):
     try:
         if request.method == "POST":
-            coupon_code = request.POST.get("couponcode")
+            coupon_code = request.POST.get("couponcode").strip()
             min_amount = request.POST.get("minamount")
             off_percent = request.POST.get("offpercent")
             max_discount = request.POST.get("maxdiscount")
@@ -1153,6 +1331,18 @@ def admin_edit_coupon(request, id):
         return render(request, 'admin/admin_edit_coupon.html', context)    
 
 #------------Order Managment-------------------------------------------------------
+
+def send_refund_email(email, amount):
+    try:
+        subject = 'Return Successful'
+        message = f'Your return request is accpeted.Amount Rs.{amount} is credited to your wallet.Please Check your wallet!'
+        from_email = settings.EMAIL_HOST_USER
+        recipient_list = [email]
+        
+        send_mail(subject, message, from_email, recipient_list)
+    except Exception as e:
+        print(e)  
+        
 @cache_control(no_cache=True, no_store=True)
 @staff_member_required(login_url='admin_login')
 def admin_order(request):
@@ -1227,7 +1417,7 @@ def return_request(request, id):
         if request.method == 'POST':
             order_item.is_returned = True
             variant.stock += order_item.quantity
-            amount = int(variant.offerprice()) * order_item.quantity
+            amount = int(order_item.product_price) * order_item.quantity
             if coupon>0:
                 amount=amount-coupon
             if tax>0:
@@ -1246,6 +1436,8 @@ def return_request(request, id):
             variant.save()
             user.save()
             order.save()
+            send_refund_email(user.email,refund_amount)
+            messages.success(request,"Item return successful")
             return redirect('admin_order_update', order_id)
     except Exception as e:
         print(e)

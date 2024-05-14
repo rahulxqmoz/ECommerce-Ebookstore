@@ -3,11 +3,12 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Add Author</h2>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form id="addAuthorForm" action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
             <label for="authorName" class="form-label">Author Name</label>
-            <input type="text" class="form-control" id="authorName" name="authorname" required>
+            <input type="text" class="form-control" id="authorName" name="authorname" >
+            <div id="authorNameError" class="text-danger"></div>
         </div>
         <div class="mb-3">
             <label for="authorDescription" class="form-label">Author Description</label>
@@ -16,15 +17,45 @@
         <div class="mb-3">
             <label for="authorImage" class="form-label">Author Image</label>
             <input type="file" class="form-control" id="authorImage" name="authorimage" accept="image/*" required>
+            <div id="authorImageError" class="text-danger"></div>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
-        <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-        </span></div>
+        <div class="row d-flex justify-content-center" style="align-items: center">
+            <span class="text-danger fw-5" id="formErrorMessages">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </span>
+        </div>
     </form>
 </div>
 
+<script>
+    document.getElementById("addAuthorForm").addEventListener("submit", function(event) {
+        var authorName = document.getElementById("authorName").value.trim();
+        var authorImage = document.getElementById("authorImage").value;
+        var authorNameError = document.getElementById("authorNameError");
+        var authorImageError = document.getElementById("authorImageError");
+
+        // Validate author name
+        if (!authorName || !isNaN(authorName)) {
+            authorNameError.textContent = "Author name is required and must be a valid name";
+            event.preventDefault();
+        } else {
+            authorNameError.textContent = "";
+        }
+
+        // Validate author image file type
+        if (authorImage) {
+            var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+            if (!allowedExtensions.exec(authorImage)) {
+                authorImageError.textContent = "Only JPG, JPEG, or PNG files are allowed";
+                event.preventDefault();
+            } else {
+                authorImageError.textContent = "";
+            }
+        }
+    });
+</script>
 
 {% endblock %}

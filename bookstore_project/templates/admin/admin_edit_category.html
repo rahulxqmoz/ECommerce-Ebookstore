@@ -26,12 +26,12 @@
                 </span></div>
                 <br>
                 <br>
-                <form enctype="multipart/form-data" method="post">
+                <form enctype="multipart/form-data" method="post" id="editCategoryForm">
                     {% csrf_token %}
                     <div class="row mb-4">
                         <div class="col">
                           <div class="form-outline">
-                              <input type="text" id="form6Example1" value="{{ category.category_name }}" class="form-control bg-grey text-black" name="name" required/>
+                              <input type="text" id="form6Example1" value="{{ category.category_name }}" class="form-control bg-grey text-black" name="name" />
                               <label class="form-label" for="form6Example1">Category Name</label>
                           </div>
                         </div>
@@ -51,7 +51,7 @@
                             <div class="d-flex justify-content-center">
                                 <div class="mb-3">
                                     <input class="form-control bg-grey text-black" type="file" id="formFile" name="image">
-                                    <label for="formFile" class="form-label">Choose your image</label>
+                                    <label for="formFile" class="form-label">Choose your image (jpg, jpeg, or png)</label>
                                 </div>
                             </div>
                         </div>
@@ -61,7 +61,7 @@
                         <select class="form-select select2" id="offertName" name="offer" >
                             {% if category.offer %}
                             <option value="{{category.offer.id}}">{{category.offer.name}}</option>
-                            <option value="">--No Coupon--</option>
+                            <option value="">--No offer--</option>
                             {% else %}
                             <option value="">--Select--</option>
                             {% endif %}
@@ -73,7 +73,7 @@
                     </div>
                     <div class="row mb-4">
                         <label for="maxAmount" class="form-label">Maximum Amount</label>
-                        <input type="number" class="form-control" id="maxAmount" name="maxamount" value="{{category.max_discount}}">
+                        <input type="number" class="form-control" id="maxAmounttt" name="maxamount" value="{{category.max_discount}}">
                     </div>
                     <!-- Description input -->
                     <div class="form-outline mb-4">
@@ -93,5 +93,45 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Form validation using JavaScript
+  
+    document.addEventListener("DOMContentLoaded", function() {
+        // Attach event listener to form submission
+        document.getElementById('editCategoryForm').addEventListener('submit', function(event) {
+            // Prevent default form submission
+            event.preventDefault();
+
+            // Validate Category Name
+            var categoryName = document.getElementById('form6Example1').value.trim();
+            if (categoryName === '') {
+                alert('Category Name cannot be empty');
+                return;
+            }
+            var fileInput = document.getElementById('formFile');
+            var file = fileInput.files[0];
+            if (file) {
+                var fileName = file.name;
+                var extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+                if (extension !== 'jpg' && extension !== 'jpeg' && extension !== 'png') {
+                    alert('Please upload a JPG, JPEG, or PNG image');
+                    return;
+                }
+            }
+
+            // Validate Maximum Amount
+            var maxAmount = parseInt(document.getElementById('maxAmounttt').value);
+            if (isNaN(maxAmount) || maxAmount < 0 || maxAmount % 1 !== 0 || maxAmount > 500) {
+                alert('Maximum Amount must be a non-negative integer not exceeding 500');
+                return;
+            }
+
+            // If all validations pass, submit the form
+            this.submit();
+        });
+    });
+</script>
+
 
 {% endblock %}

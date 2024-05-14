@@ -3,11 +3,11 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Add Category</h2>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" method="post" id="addCategoryForm" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
             <label for="categoryName" class="form-label">Category Name</label>
-            <input type="text" class="form-control" id="categoryName" name="categoryName" required>
+            <input type="text" class="form-control" id="categoryName" name="categoryName" >
         </div>
         <div class="mb-3">
             <label for="categoryDescription" class="form-label">Category Description</label>
@@ -39,5 +39,39 @@
     </form>
 </div>
 
+<script>
+    // Form validation using JavaScript
+    document.getElementById('addCategoryForm').addEventListener('submit', function(event) {
+        // Validate Category Name
+        var categoryName = document.getElementById('categoryName').value.trim();
+        if (categoryName === '') {
+            alert('Category Name cannot be empty');
+            event.preventDefault();
+            return;
+        }
+
+        // Validate File Upload
+        var fileInput = document.getElementById('categoryImage');
+        var file = fileInput.files[0];
+        if (!file) {
+            alert('Please select an image');
+            event.preventDefault();
+            return;
+        }
+        var fileName = file.name;
+        var extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        if (extension !== 'jpg' && extension !== 'jpeg' && extension !== 'png') {
+            alert('Please upload a JPG, JPEG, or PNG image');
+            event.preventDefault();
+            return;
+        }
+        var maxAmount = parseFloat(document.getElementById('maxAmount').value);
+        if (isNaN(maxAmount) || maxAmount < 0 || maxAmount > 500) {
+            alert('Maximum Amount must be a non-negative integer not exceeding 500');
+            event.preventDefault();
+            return;
+        }
+    });
+</script>
 
 {% endblock %}

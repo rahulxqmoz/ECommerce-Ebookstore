@@ -41,8 +41,8 @@
         <div class="breadcrumb-wrap">
             <div class="container">
                 <ul class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="#">Home</a></li>
-                    <li class="breadcrumb-item"><a href="#">Products</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'browse_products' %}">Products</a></li>
                     <li class="breadcrumb-item active">Cart</li>
                 </ul>
             </div>
@@ -71,7 +71,7 @@
                                         <th>Name</th>
                                         <th>Price</th>
                                         <th>Quantity</th>
-                                        <th>Total</th>
+                                        <th>Offer-Total</th>
                                         <th>Remove</th>
                                     </tr>
                                 </thead>
@@ -83,7 +83,7 @@
                                         <td><a href="#"><img src="{{item.product.product.product_image.url}}" alt="Image"></a></td>
                                         {% endif %}
                                         <td ><a href="#">{{item.product.variant_name}}</a></td>
-                                        <td >{{item.product.offerprice|floatformat:0}}</td>
+                                        <td ><i class="fa-solid fa-indian-rupee-sign"></i> {{item.product.product_price|floatformat:0}}</td>
                                         <td style="width: 250px;">
                                             <div class="qty-cart">
                                                 <button class="btn-minus-cart"><i class="fa fa-minus"></i></button>
@@ -91,8 +91,8 @@
                                                 <button class="btn-plus-cart quantity-plus" data-item-id="{{ item.id }}"><i class="fa fa-plus"></i></button>
                                             </div>
                                         </td>
-                                        <td id="sub-total-{{ item.id }}">{{item.sub_total | floatformat:0}} </td>
-                                        <td><a href="{% url 'delete_cart' item.id %}"><button><i class="fa fa-trash"></i></button></a></td>
+                                        <td id="sub-total-{{ item.id }}"><i class="fa-solid fa-indian-rupee-sign"></i> {{item.sub_total | floatformat:0}} </td>
+                                        <td><a href="{% url 'delete_cart' item.id %}" onclick="return confirm('Are you sure you want to delete this item?');"><button><i class="fa fa-trash"></i></button></a></td>
                                     </tr>
                                     
                                     {% endfor %}
@@ -139,7 +139,7 @@
                                 <p>Sub Total :<span id="subtotaloffer">{{ subtotaloffer }}</span></p>
                                 <p>Discount :<span id="discount">Rs.{{ discount }}</span></p>
                                 <p>Coupon Discount :<span id="coupon_offer">Rs.{{couponoffer}}</span></p>
-                                <p>Category Discount :<span id="category_offeramount">Rs.{{category_offeramount}}</span></p>
+                                <!-- <p>Category Discount :<span id="category_offeramount">Rs.{{category_offeramount}}</span></p> -->
                                 <p>Shipping Cost :<span id="shipping-cost">Rs.{{shipping}}</span></p>
                                 <p>Tax :<span id="tax">Rs.{{tax}}</span></p>
                                 <h4>Grand Total :<span id="grand_total">Rs.{{ grand_total }}</span></h4>
@@ -204,15 +204,15 @@
 
                              } else {
                            
-                            $('#sub-total-'+itemId).text(response.sub_total);
-                            $('#grand_total').text(response.grand_total);
-                            $('#subtotaloffer').text(response.subtotaloffer);
-                            $('#shipping-cost').text(response.shipping);
-                            $('#discount').text(response.discount);
-                            $('#coupon_offer').text(response.couponoffer)
-                            $('#tax').text(response.tax)
+                            $('#sub-total-'+itemId).html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.sub_total);
+                            $('#grand_total').html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.grand_total);
+                            $('#subtotaloffer').html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.subtotaloffer);
+                            $('#shipping-cost').html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.shipping);
+                            $('#discount').html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.discount);
+                            $('#coupon_offer').html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.couponoffer);
+                            $('#tax').html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.tax);
                             $('#couponcode').text(response.couponcode) 
-                            $('#category_offeramount').text(response.category_offeramount)   
+                            $('#category_offeramount').html('<i class="fa-solid fa-indian-rupee-sign"></i> ' + response.category_offeramount);   
                             console.log(response.alreadycouponexists)  
                             if (response.alreadycouponexists) {
                             $('#couponremove').show(); // Show the button

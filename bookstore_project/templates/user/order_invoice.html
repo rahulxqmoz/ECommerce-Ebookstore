@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+    @page {
+        size: a4 portrait;
+		@frame header_frame {           
+            -pdf-frame-content: header_content;
+            left: 50pt; width: 512pt; top: 50pt; height: 40pt;
+        }
+        @frame content_frame {          
+            left: 50pt; width: 512pt; top: 90pt; height: 632pt;
+        }
+        @frame footer_frame {           
+            -pdf-frame-content: footer_content;
+            left: 50pt; width: 512pt; top: 772pt; height: 20pt;
+        }
+    }
+</style>
+</head>
+
+<body>
+    <!-- Content for Static Frame 'header_frame' -->
+    <div id="header_content">
+        <h1 style="font-size: 20px; color: #3c28f5">
+            <span class="text-primary font-weight-bold mr-1" style="font-size: 25px; color: rgb(76, 143, 76)"></span>Ebook
+            <span class="text-primary font-weight-bold mr-1" style="font-size: 25px; color: rgb(71, 73, 92)"></span>Store
+        </h1>
+    </div>
+
+    <!-- Content for Static Frame 'footer_frame' -->
+    <div id="footer_content">(c) - page <pdf:pagenumber>
+        of <pdf:pagecount>
+    </div>
+
+    <!-- Company Information -->
+    <div class="row">
+    <div class="col-md-6">
+        <h2>{{ company }}</h2>
+        <p>{{ phone }}</p>
+        <p>{{ city }}, {{ state }}</p>
+        <p>{{ email }}</p>
+        <p>{{ zipcode }}</p>
+        <p>{{ website }}</p>
+    </div>
+
+    <hr>
+
+    <!-- Delivery Address -->
+    <div id="delivery_address" class="col-md-6"> 
+        <h2>Delivery Address</h2>
+        <p>{{ user }}</p>
+        <p>{{ customer_phone }}</p>
+        <p>{{ customer_address }}, {{ town }}, {{ nearby_location }}, {{ district }},{{state}}, {{ zip_code }}</p>
+        <p>{{ customer_email }}</p>
+    </div>
+</div>
+    <hr>
+
+    <!-- Orders -->
+    <div class="text-center bg-secondary" style="background-color: #3b23c5; text-align: center; padding: 10px">
+        <h2 style="color: white;">ORDERS</h2>
+    </div>
+
+    <div>
+        <h2>Order Id: #{{ order.order_id }}</h2>
+        <table style="text-align: center">
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Total</th>
+            </tr>
+            {% for product in order_products %}
+            <tr>
+                <td>{{ product.product.variant_name }}</td>
+                <td>{{ product.product.product_price }}</td>
+                <td>{{ product.quantity }}</td>
+                {% if product.is_returned %}
+                <td>Returned</td>
+                {% elif product.item_cancel %}
+                <td>Cancelled</td>
+                {% else %}
+                <td>Delivered</td>
+                {% endif %}
+                <td>Rs. {{ product.product.product_price|floatformat:2 }} * {{ product.quantity }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <hr>
+
+    <!-- Total, Tax, Discount -->
+    
+    <div style="text-align: right">
+        <p>Total: <strong>Rs. {{ order.subtotal|floatformat:2 }}</strong></p>
+        <p>Product Discount: <strong>Rs. {{ order.discount_amount|floatformat:2 }}</strong></p>
+        <p>Tax: <strong>Rs. {{ order.tax|floatformat:2 }}</strong></p>
+        <p>Category Discount: <strong>Rs. {{ order.category_amount|floatformat:2 }}</strong></p>
+        <p>Coupon Discount: <strong>Rs. {{ order.coupon_amount|floatformat:2 }}</strong></p>
+        <p>Shipping Amount: <strong>Rs. {{ order.shipping_cost|floatformat:2 }}</strong></p>
+        <hr>
+        <p><strong>Total Amount: Rs. {{ order.order_total|floatformat:2 }}</strong></p>
+    </div>
+
+</body>
+</html>

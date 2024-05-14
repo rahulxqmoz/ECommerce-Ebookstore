@@ -104,8 +104,32 @@ class Product_variant(models.Model):
 
     def offerprice(self):
         offerprice=0
-        offerprice=int(self.product_price) - (int(self.product_price)  * int (self.offer.off_percent)/100)
+        if self.offer is not None and not self.offer.is_expired ():
+            offerprice=int(self.product_price) - (int(self.product_price)  * int (self.offer.off_percent)/100)
+            if offerprice < 0.3 * int(self.product_price):
+                return 0.3 * int(self.product_price)
+            return offerprice
         return offerprice
+
+    def catoffer(self):
+        catoffer=0
+        if self.category.offer is not None and not self.category.offer.is_expired ():
+            catoffer=int(self.product_price) - (int(self.product_price)  * int (self.category.offer.off_percent)/100)
+            if catoffer < 0.3 * int(self.product_price):
+                return 0.3 * int(self.product_price)
+            return catoffer
+        return catoffer
+    
+    def price_sub_total(self):
+        if self.offerprice() > 0 and self.catoffer() > 0:
+            return min(self.offerprice(),self.catoffer())
+        elif self.offerprice() > 0:
+            return self.offerprice()
+        elif self.catoffer() > 0:
+            return self.catoffer()
+        else:
+            return self.product_price
+
     def __str__(self) -> str:
         return self.variant_name
 
@@ -120,6 +144,7 @@ class MultipleImages(models.Model):
 class ProductReview(models.Model):
     product = models.ForeignKey(Product_variant, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
+    title=models.CharField(max_length=150,null=True)
     rating = models.IntegerField(default=0)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

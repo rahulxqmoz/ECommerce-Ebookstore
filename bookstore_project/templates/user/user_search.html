@@ -62,13 +62,23 @@
                                     <i class="fa fa-star"></i>
                                 {% endfor %}
                                 </div>
-                                {% if product.offerprice %}
+                                
+                              
+
+                                {% if product.offerprice > 0 and product.catoffer > 0 %}
+                                {% if product.offerprice < product.catoffer %}
                                 
                                  <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.offerprice |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
                                  {% else %}
-                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                                 <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.catoffer |floatformat:0 }} </div>
                                 {% endif %}
-                       
+                                {% elif product.offerprice > 0 %}
+                                <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.offerprice |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
+                                {% elif product.catoffer > 0 %}
+                                <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.catoffer |floatformat:0 }} <span><i class="fa-solid fa-indian-rupee-sign"> </i>{{ product.product_price |floatformat:0 }}</span></div>
+                                {% else %}
+                                <div class="price" style="font-size: large;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ product.product_price |floatformat:0 }} </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

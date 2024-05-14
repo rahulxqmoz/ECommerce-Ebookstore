@@ -3,7 +3,7 @@
 {% block body %}
 <div class="container mt-5">
     <h2>Add Products Variant</h2>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" method="post" id="productForm" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
             <label for="productName" class="form-label">Select Product</label>
@@ -53,7 +53,7 @@
 
         <div class="mb-3">
             <label for="offertName" class="form-label">Select Offer</label>
-            <select class="form-select select2" id="offertName" name="offer" required>
+            <select class="form-select select2" id="offertName" name="offer">
                 <option value="">Select Offer</option>
                 {% for offer in offers %}
                 <option value="{{offer.id}}">{{offer.name}}</option>
@@ -63,7 +63,7 @@
 
         <div class="mb-3">
             <label for="stockVariant" class="form-label">Stock</label>
-             <input type="number" class="form-control" id="productsName" name="stock" required>
+             <input type="number" class="form-control" id="productStock" name="stock" required>
         </div>
         <div class="mb-3">
             <label for="ratingVariant" class="form-label">Rating</label>
@@ -86,5 +86,46 @@
     </form>
 </div>
 
+<script>
+    // Form validation using JavaScript
+    document.getElementById('productForm').addEventListener('submit', function(event) {
+        // Validate Category Name
+        
+
+        // Validate File Upload
+        var fileInput = document.getElementById('formFile');
+        var file = fileInput.files[0];
+        if (!file) {
+            alert('Please select an image');
+            event.preventDefault();
+            return;
+        }
+        var fileName = file.name;
+        var extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        if (extension !== 'jpg' && extension !== 'jpeg' && extension !== 'png') {
+            alert('Please upload a JPG, JPEG, or PNG image');
+            event.preventDefault();
+            return;
+        }
+        var productStock = parseFloat(document.getElementById('productStock').value);
+        if (isNaN(productStock) || productStock < 0) {
+            alert('Stock must be a non-negative number');
+            event.preventDefault();
+            return;
+        }
+        var priceAmount = parseFloat(document.getElementById('priceVariant').value);
+        if (isNaN(priceAmount) || priceAmount < 0) {
+            alert('Amount must be a non-negative number');
+            event.preventDefault();
+            return;
+        }
+        var rating = parseFloat(document.getElementById('ratingVariant').value);
+        if (isNaN(rating) || rating < 0 || rating > 5 || rating % 1 !== 0) {
+            alert('Rating must be a whole number between 0 and 5 (inclusive)');
+            event.preventDefault(); // Prevent form submission
+            return;
+        }
+    });
+</script>
 
 {% endblock %}

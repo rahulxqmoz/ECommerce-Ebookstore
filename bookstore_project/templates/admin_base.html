@@ -30,6 +30,8 @@
     <script src="https://kit.fontawesome.com/0fc54a2091.js" crossorigin="anonymous"></script>
     <!-- Template Stylesheet -->
     <link href="{% static 'admin/css/style.css'%}" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 </head>
 
 <body>
@@ -62,12 +64,12 @@
                     </div>
                 </div>
                 <div class="navbar-nav w-100">
-                    <a href="{% url 'admin_dashboard' %}" class="nav-item nav-link active"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
-                 
-                    <a href="{% url 'admin_users' %}" class="nav-item nav-link"><i class="fa fa-user me-2"></i>View Users</a>
+                    <a href="{% url 'admin_dashboard' %}" class="nav-item nav-link {% if request.path == '/admin_home/admin_dashboard/' %}active{% endif %}"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
+                    
+                    <a href="{% url 'admin_users' %}" class="nav-item nav-link {% if request.path == '/admin_home/admin_user/' %}active{% endif %}"><i class="fa fa-user me-2"></i>View Users</a>
                     
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="far fa-file-alt me-2"></i>Catgory</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if '/admin_edit_category/' in request.path or request.path == '/admin_home/admin_category/' or request.path == '/admin_home/admin_category_view/'  %}active{% endif %}" data-bs-toggle="dropdown"><i class="far fa-file-alt me-2"></i>Category</a>
                         <div class="dropdown-menu bg-transparent border-0">
                             <a href="{% url 'admin_category' %}" class="dropdown-item"><i class="fa fa-file-alt me-2"></i>Add category</a>
                             <a href="{% url 'admin_category_view' %}" class="dropdown-item"><i class="fa fa-file-alt me-2"></i>View category</a>
@@ -75,7 +77,7 @@
                         </div>
                     </div>
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="far fa-user me-2"></i>Authors</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if '/admin_edit_author/' in request.path or request.path == '/admin_home/admin_add_author/' or request.path == '/admin_home/admin_author/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="far fa-user me-2"></i>Authors</a>
                         <div class="dropdown-menu bg-transparent border-0">
                             <a href="{% url 'admin_add_author' %}" class="dropdown-item"><i class="fa fa-user me-2"></i>Add Author</a>
                             <a href="{% url 'admin_author' %}" class="dropdown-item"><i class="fa fa-user me-2"></i>View Author</a>
@@ -84,7 +86,7 @@
                     </div>
 
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="far fa-bell me-2"></i>Offers</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if '/admin_edit_offer/' in request.path or request.path == '/admin_home/admin_add_offer/' or request.path == '/admin_home/admin_offer/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="far fa-bell me-2"></i>Offers</a>
                         <div class="dropdown-menu bg-transparent border-0">
                             <a href="{% url 'admin_add_offer' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>Add Offer</a>
                             <a href="{% url 'admin_offer' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>View Offer</a>
@@ -93,7 +95,7 @@
                     </div>
 
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="fa fa-envelope me-2"></i>Editions</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if '/admin_edit_edition/' in request.path or request.path == '/admin_home/admin_add_edition/' or request.path == '/admin_home/admin_edition/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="fa fa-envelope me-2"></i>Editions</a>
                         <div class="dropdown-menu bg-transparent border-0">
                             <a href="{% url 'admin_add_edition' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>Add Editions</a>
                             <a href="{% url 'admin_edition' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>View Editions</a>
@@ -102,7 +104,7 @@
                     </div>
 
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="fa fa-file-alt me-2"></i>Products</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if '/admin_product_edit/' in request.path or request.path == '/admin_home/admin_add_product/' or request.path == '/admin_home/admin_product/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="fa fa-file-alt me-2"></i>Products</a>
                         <div class="dropdown-menu bg-transparent border-0">
                             <a href="{% url 'admin_add_product' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>Add Products</a>
                             <a href="{% url 'admin_product' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>View Products</a>
@@ -111,7 +113,7 @@
                     </div>
 
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="fa fa-table me-2"></i>Product Variant</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if '/admin_edit_variant/' in request.path or request.path == '/admin_home/admin_add_product_variant/' or request.path == '/admin_home/admin_productvariant/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="fa fa-table me-2"></i>Product Variant</a>
                         <div class="dropdown-menu bg-transparent border-0">
                             <a href="{% url 'admin_add_product_variant' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>Add Product Variant</a>
                             <a href="{% url 'admin_productvariant' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>View Product Variant</a>
@@ -121,7 +123,7 @@
                     </div>
                     
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="far fa-user me-2"></i>Coupons</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if '/admin_edit_coupon/' in request.path or request.path == '/admin_home/admin_add_coupon/' or request.path == '/admin_home/admin_coupon/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="far fa-user me-2"></i>Coupons</a>
                         <div class="dropdown-menu bg-transparent border-0">
                             <a href="{% url 'admin_add_coupon' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>Add Coupon</a>
                             <a href="{% url 'admin_coupon' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>View Coupon</a>
@@ -129,17 +131,19 @@
                     </div>
 
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="fa fa-th me-2"></i>Orders</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if request.path == '/admin_home/admin_order/' or request.path == '/admin_home/admin_offer/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="fa fa-th me-2"></i>Orders</a>
                         <div class="dropdown-menu bg-transparent border-0">
                     
                             <a href="{% url 'admin_order' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>View Orders</a>
                         </div>
                     </div>
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="fa bi-file-earmark-excel me-2"></i>Reports</a>
+                        <a href="#" class="nav-link dropdown-toggle {% if request.path == '/admin_home/admin_reports/' or request.path == '/admin_home/sales_report/' %}active{% endif %}" data-bs-toggle="dropdown"><i class="fa bi-file-earmark-excel me-2"></i>Reports</a>
                         <div class="dropdown-menu bg-transparent border-0">
                     
                             <a href="{% url 'admin_reports' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>Stock Reports</a>
+                            <a href="{% url 'sales_report' %}" class="dropdown-item"><i class="fa fa-bell me-2"></i>Sales Reports</a>
+
                         </div>
                     </div>
                  
@@ -295,7 +299,8 @@
     <script src="{% static 'admin/js/print.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
 
-   
+
+
     
 </body>
 

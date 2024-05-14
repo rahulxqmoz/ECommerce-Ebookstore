@@ -20,13 +20,14 @@
 
                 <!-- Edit category form  -->
 
-                <form enctype="multipart/form-data" method="post">
+                <form enctype="multipart/form-data" method="post" id="editEditionForm">
                     {% csrf_token %}
                     <div class="row mb-4">
                         <div class="col">
                           <div class="form-outline">
-                              <input type="text" id="form6Example1" value="{{ edition.editons_name }}" class="form-control bg-grey text-black" name="name" required/>
+                              <input type="text" id="form6Example1" value="{{ edition.editons_name }}" class="form-control bg-grey text-black" name="name" />
                               <label class="form-label" for="form6Example1">Edition Name</label>
+                              <div id="authorNameError" class="text-danger"></div>
                           </div>
                         </div>
                     </div>
@@ -40,8 +41,9 @@
                     <div class="row mb-4">
                         <div class="col">
                           <div class="form-outline">
-                              <input type="number" id="form6Example1" value="{{ edition.publication_year }}" class="form-control bg-grey text-black" name="year" required/>
+                              <input type="number" id="publicationYear" value="{{ edition.publication_year }}" class="form-control bg-grey text-black" name="year" required/>
                               <label class="form-label" for="form6Example1">Edition Year</label>
+                              <div id="publicationYearError" class="text-danger"></div>
                           </div>
                         </div>
                     </div>
@@ -58,6 +60,13 @@
                     <div class="text-end">
                         <button type="submit" class="btn-lg border-0 btn-success btn-block mb-4">Update</button>
                     </div>
+                    <div class="row d-flex justify-content-center" style="align-items: center">
+                        <span class="text-danger fw-5" id="formErrorMessages">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </span>
+                    </div>
                 </form>
               <!-- Edit product form end -->
                 <hr />
@@ -65,5 +74,30 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById("editEditionForm").addEventListener("submit", function(event) {
+        var editionName = document.getElementById("form6Example1").value.trim();
+        var editionNameError = document.getElementById("authorNameError");
+        var publicationYear = document.getElementById("publicationYear").value;
+
+        // Validate author name
+        if (!editionName || !isNaN(editionName)) {
+            editionNameError.textContent = "Edition name is required and must be a valid name";
+            event.preventDefault();
+        } else {
+            authorNameError.textContent = "";
+        }
+            // Validate publication year
+            if (publicationYear < 1900 || isNaN(publicationYear)) {
+            event.preventDefault();
+            document.getElementById("publicationYearError").textContent = "Publication year must be a valid year after 1900";
+        } else {
+            document.getElementById("publicationYearError").textContent = "";
+        }
+
+    
+    });
+</script>
 
 {% endblock %}

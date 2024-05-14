@@ -56,7 +56,19 @@ class CartItem(models.Model):
         ordering = ['created_date']
 
     def sub_total(self):
-        return self.product.offerprice() * self.quantity
+        if self.product.offerprice() > 0 and self.product.catoffer() > 0:
+            minproduct_price= min(self.product.offerprice(),self.product.catoffer())
+            return minproduct_price * self.quantity
+        elif self.product.offerprice() > 0:
+            return self.product.offerprice() * self.quantity
+        elif self.product.catoffer() > 0:
+            return self.product.catoffer() * self.quantity
+        
+        else:
+            return self.product.product_price * self.quantity
+
+
+        
     
     def sub_total_without_offer(self):
         return self.product.price * self.quantity

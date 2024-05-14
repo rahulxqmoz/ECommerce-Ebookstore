@@ -1,4 +1,3 @@
-
 {% extends 'admin_base.html' %}
 {% load static %}
 {% block body %}
@@ -20,7 +19,7 @@
 
                 <!-- Edit category form  -->
 
-                <form enctype="multipart/form-data" method="post">
+                <form id="editAuthorForm" enctype="multipart/form-data" method="post">
                     {% csrf_token %}
                     <div class="row mb-4">
                         <div class="col">
@@ -61,6 +60,11 @@
                     <div class="text-end">
                         <button type="submit" class="btn-lg border-0 btn-success btn-block mb-4">Update</button>
                     </div>
+                    <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </span></div>
                 </form>
               <!-- Edit product form end -->
                 <hr />
@@ -68,5 +72,30 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById("editAuthorForm").addEventListener("submit", function(event) {
+        var authorName = document.getElementById("form6Example1").value.trim();
+        var authorImage = document.getElementById("formFile").value;
+        var authorImageError = document.getElementById("authorImageError");
+
+        // Validate author name
+        if (!authorName || !isNaN(authorName)) {
+            alert("Author name is required and must be a valid name");
+            event.preventDefault();
+            return;
+        }
+
+        // Validate author image file type
+        if (authorImage) {
+            var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+            if (!allowedExtensions.exec(authorImage)) {
+                alert("Only JPG, JPEG, or PNG files are allowed");
+                event.preventDefault();
+                return;
+            }
+        }
+    });
+</script>
 
 {% endblock %}

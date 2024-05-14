@@ -41,32 +41,34 @@
                   
                     <div class="col-md-12">    
                         <div class="register-form">
-                            <form action="" method="post">
+                            <form id="registrationForm" action="" method="post">
                                 {% csrf_token %}
                             <div class="row">
                                 <div class="col-md-6">
                                     <label>First Name</label>
-                                    <input class="form-control" type="text" name="first_name" placeholder="First Name" required>
+                                    <input class="form-control" type="text" id="firstname" name="first_name" placeholder="First Name" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label>Last Name</label>
-                                    <input class="form-control" type="text" name="last_name" placeholder="Last Name">
+                                    <input class="form-control" type="text" id="lastname" name="last_name" placeholder="Last Name">
                                 </div>
                                 <div class="col-md-6">
                                     <label>E-mail</label>
-                                    <input class="form-control" type="email" name="email" placeholder="E-mail" required>
+                                    <input class="form-control" type="email" id="email" name="email" placeholder="E-mail" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label>Mobile No</label>
-                                    <input class="form-control" type="text" name="phonenumber" placeholder="Mobile No" required>
+                                    <input class="form-control" type="number" id="phoneNumber" name="phonenumber" placeholder="Mobile No" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label>Password</label>
-                                    <input class="form-control" type="password" name="password" placeholder="password" required>
+                                    <input class="form-control" id="password" type="password" name="password" placeholder="password" required>
+                                    <span id="passwordStrength" style="color: red;" ></span>
                                 </div>
                                 <div class="col-md-6">
                                     <label>Confirm Password</label>
-                                    <input class="form-control" type="password" name="c_passsword" placeholder="password" required>
+                                    <input class="form-control" id="confirmPassword" type="password" name="c_passsword" placeholder="password" required>
+                                    <span id="passwordStrength" style="color: red;" ></span>
                                 </div>
                                 <div class="col-md-6">
                                     <label>Referal Code</label>
@@ -74,7 +76,7 @@
                                 </div>
                                 
                                 <div class="col-md-12">
-                                    <button class="btn">Submit</button>
+                                    <button id="submitButton" class="btn">Submit</button>
                                 </div>
                                
                             </div>
@@ -84,119 +86,81 @@
                 </div>
             </div>
         </div>
-        <!-- Login End -->
+        <script>
+            // Function to validate password match
+            function validatePassword() {
+                var password = document.getElementById("password").value;
+                var confirmPassword = document.getElementById("confirmPassword").value;
+                var strengthSpan = document.getElementById("passwordStrength");
+        
+                // Check if password and confirm password match
+                if (password !== confirmPassword) {
+                    strengthSpan.innerText = "Passwords do not match";
+                    return false;
+                } else {
+                    strengthSpan.innerText = ""; // Clear previous strength message
+                }
+        
+                // Check if password meets strength criteria
+                var lowerCaseRegex = /[a-z]/;
+                var upperCaseRegex = /[A-Z]/;
+                var numberRegex = /[0-9]/;
+        
+                var isValid = lowerCaseRegex.test(password) && upperCaseRegex.test(password) && numberRegex.test(password) && password.length >= 8;
+        
+                if (!isValid) {
+                    strengthSpan.innerText = "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one number";
+                    return false;
+                } else {
+                    strengthSpan.innerText = ""; // Clear previous strength message
+                }
+        
+                return true;
+            }
+        
+            // Form submission validation
+            document.getElementById("submitButton").addEventListener("click", function(event) {
+                var password = document.getElementById("password");
+                var confirmPassword = document.getElementById("confirmPassword");
+                var phoneNumber = document.getElementById("phoneNumber");
+                var email = document.getElementById("email");
+                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                var firstName = document.getElementById("firstname"); 
+                var lastName = document.getElementById("lastname"); 
+        
+                // Validate password
+                if (!validatePassword()) {
+                    event.preventDefault(); // Prevent form submission if password is invalid
+                }
+
+                if (firstName.value.trim() === "" || !isNaN(firstName.value.trim())) {
+                 alert("First name cannot be empty or contain numbers");
+                 event.preventDefault();
+                }
+        
+                // Validate last name
+                if (!isNaN(lastName.value.trim())) {
+                 alert("Last name cannot contain numbers");
+                 event.preventDefault();
+                }
+               
+        
+                // Validate phone number
+                if (phoneNumber.value.length !== 10) {
+                    alert("Enter valid Phone number!! Phone number must be 10 digits long");
+                    event.preventDefault();
+                }
+        
+                // Validate email
+                if (!emailRegex.test(email.value)) {
+                    alert("Enter a valid email address");
+                    event.preventDefault();
+                }
+            });
+        </script>
         
         {% endblock %}
-        <!-- Footer Start -->
-        <div class="footer">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
-                            <h1>E Shop</h1>
-                            <p>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sollicitudin rutrum massa. Suspendisse sollicitudin rutrum massa. Vestibulum porttitor, metus sed pretium elementum, nisi nibh sodales quam, non lobortis neque felis id mauris.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
-                            <h3 class="title">Useful Pages</h3>
-                            <ul>
-                                <li><a href="product.html">Product</a></li>
-                                <li><a href="product-detail.html">Product Detail</a></li>
-                                <li><a href="cart.html">Cart</a></li>
-                                <li><a href="checkout.html">Checkout</a></li>
-                                <li><a href="login.html">Login & Register</a></li>
-                                <li><a href="my-account.html">My Account</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
-                            <h3 class="title">Quick Links</h3>
-                            <ul>
-                                <li><a href="product.html">Product</a></li>
-                                <li><a href="cart.html">Cart</a></li>
-                                <li><a href="checkout.html">Checkout</a></li>
-                                <li><a href="login.html">Login & Register</a></li>
-                                <li><a href="my-account.html">My Account</a></li>
-                                <li><a href="wishlist.html">Wishlist</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-widget">
-                            <h3 class="title">Get in Touch</h3>
-                            <div class="contact-info">
-                                <p><i class="fa fa-map-marker"></i>123 E Shop, Los Angeles, CA, USA</p>
-                                <p><i class="fa fa-envelope"></i>email@example.com</p>
-                                <p><i class="fa fa-phone"></i>+123-456-7890</p>
-                                <div class="social">
-                                    <a href=""><i class="fa fa-twitter"></i></a>
-                                    <a href=""><i class="fa fa-facebook"></i></a>
-                                    <a href=""><i class="fa fa-linkedin"></i></a>
-                                    <a href=""><i class="fa fa-instagram"></i></a>
-                                    <a href=""><i class="fa fa-youtube"></i></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row payment">
-                    <div class="col-md-6">
-                        <div class="payment-method">
-                            <p>We Accept:</p>
-                            <img src="img/payment-method.png" alt="Payment Method" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="payment-security">
-                            <p>Secured By:</p>
-                            <img src="img/godaddy.svg" alt="Payment Security" />
-                            <img src="img/norton.svg" alt="Payment Security" />
-                            <img src="img/ssl.svg" alt="Payment Security" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Footer End -->
 
         
-        <!-- Footer Bottom Start -->
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-6 copyright">
-                        <p>Copyright &copy; <a href="https://htmlcodex.com">HTML Codex</a>. All Rights Reserved</p>
-                    </div>
-
-                    <div class="col-md-6 template-by">
-                        <p>Template By <a href="https://htmlcodex.com">HTML Codex</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Footer Bottom End -->
         
         
-        <!-- Back to Top -->
-        <a href="#" class="back-to-top"><i class="fa fa-chevron-up"></i></a>
-
-        
-        <!-- JavaScript Libraries -->
-        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
-        <script src="lib/easing/easing.min.js"></script>
-        <script src="lib/slick/slick.min.js"></script>
-
-        
-        <!-- Template Javascript -->
-        <script src="js/main.js"></script>
-    </body>
-</html>

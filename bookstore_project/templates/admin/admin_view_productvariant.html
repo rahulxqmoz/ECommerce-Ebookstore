@@ -12,24 +12,21 @@
         {{ message }}
     {% endfor %}
 </span></div>
-<div style="overflow-x: auto;">
-<table class="table  table-bordered table-striped">
+<div >
+<table class="table  table-bordered table-striped table-sm" style="font-size: small;">
   <thead class="thead-dark">
     <tr>
       
       <th scope="col">Sl No</th>
       <th scope="col">Variant Name</th>
-      <th scope="col">Slug</th>
-      <th scope="col">Product</th>
+    
       <th scope="col">Category</th>
       <th scope="col">Author</th>
       <th scope="col">Offer</th>
       <th scope="col">Edition</th>
       <th scope="col">Price</th>
       <th scope="col">Stock</th>
-      <th scope="col">Rating</th>
-      <th scope="col">Created Date</th>
-      <th scope="col">Modified Date</th>
+  
       <th scope="col">Product Images</th>
       <th scope="col">Status</th>
       <th scope="col">Edit | Delete/Unblock</th>
@@ -42,17 +39,12 @@
     <tr>
       <th scope="row">{{ forloop.counter }}</th>
       <td> {{variant.variant_name}}</td>
-      <td> {{variant.slug}}</td>
-      <td> {{variant.product.product_title}}</td>
       <td> {{variant.category.category_name}}</td> 
       <td> {{variant.author.author_name}}</td> 
       <td> {{variant.offer.name}}</td>
       <td> {{variant.edition.editons_name}}</td>
         <td> {{variant.product_price}}</td>
           <td> {{variant.stock}}</td>    
-            <td> {{variant.rating}}</td>
-              <td> {{variant.created_date}}</td>     
-              <td> {{variant.modified_date}}</td> 
               
       <td> {% for image in variant_images.items %}
         {% if image.0 == variant.id %}

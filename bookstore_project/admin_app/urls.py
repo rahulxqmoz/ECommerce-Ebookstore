@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin_logout/', views.admin_logout,name='admin_logout'),
     path('admin_user/', views.admin_user,name='admin_users'),
     path('admin_user_manage/<int:id>/', views.admin_user_manage,name='admin_user_manage'),
+    path('sales_report/', views.sales_report_view, name='sales_report'),
 
     path('admin_category/', views.admin_category,name='admin_category'),
     path('admin_category_view/', views.admin_category_view,name='admin_category_view'),

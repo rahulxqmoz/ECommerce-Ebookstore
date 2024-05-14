@@ -94,12 +94,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bookstore_project.wsgi.application'
 AUTHENTICATION_BACKENDS = [
-    
+
     'django.contrib.auth.backends.ModelBackend',
 
-
     'allauth.account.auth_backends.AuthenticationBackend',
-    
+
 ]
 
 # Database
@@ -191,14 +190,11 @@ SITE_ID=1
 
 SOCIALACCOUNT_QUERY_EMAIL =True
 
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'OAUTH_PKCE_ENABLED': True,
-    }
-}
+
+SOCIALACCOUNT_QUERY_EMAIL=True
+
+
+AUTH_USER_MODEL = 'user_app.CustomUser'
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'email'
+
+LOGIN_REDIRECT_URL='index'

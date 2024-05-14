@@ -2,7 +2,34 @@
 
 {% load static %}
 
+
 {% block content %}
+<style>
+  .table {
+  width: 80%;
+  margin: auto;
+}
+
+.table th,
+.table td {
+  padding: 10px;
+  text-align: center;
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.table tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+</style>
+
  <!-- Breadcrumb Start -->
  <div class="breadcrumb-wrap">
   <div class="container">
@@ -48,7 +75,7 @@
                           <p class="text-muted mb-0 small">Qty: {{ order.quantity }} </p>
                         </div>
                         <div class="col-md-3 text-center d-flex justify-content-center align-items-center">
-                          <p class="text-muted mb-0 small">Rs. {{ order.product.product_price }} X {{ order.quantity }} </p>
+                          <p class="text-muted mb-0 small">Rs. {{ order.product_price }} X {{ order.quantity }} </p>
                         </div>
                       </div>
                       <hr class="mb-4" style="background-color: #e0e0e0; opacity: 1;">
@@ -88,8 +115,9 @@
                         {% if order.order_id.status == 'Delivered' %}
     
                         <div class="col-md-4">
-                            <a class="btn btn-sm btn-warning mb-2" href="#" target="_blank">View Invoice<i class="bi bi-file-earmark-excel"></i></a>
-    
+                          <a class="btn btn-sm btn-warning mb-2" href="javascript:void(0);" onclick="openPdfInNewWindow({{ order.id }})">View Invoice <i class="bi bi-file-earmark-excel"></i></a>
+    		                  <a class="btn btn-sm btn-warning mb-2"  href="{% url 'pdf_download' order.id %}">Download Invoice <i class="bi bi-download"></i></a>
+
                         </div>
                         {% endif %}
                       </div>
@@ -98,6 +126,48 @@
                 </div>
     
                 {% endfor %}
+                {% if order_obj %}
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th scope="col">Payment Method - {{order_obj.payment.payment_method}}</th>
+                    </tr>
+                  </thead>
+                  </table>
+                <div class="text-center mt-4" style="margin-bottom: 20px;">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th scope="col">Description</th>
+                        <th scope="col">Amount (Rs.)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Grand Total</td>
+                        <td><i class="fa-solid fa-indian-rupee-sign"></i> {{ order_obj.order_total }}</td>
+                      </tr>
+                      <tr>
+                        <td>Discount Amount</td>
+                        <td><i class="fa-solid fa-indian-rupee-sign"></i> {{ order_obj.discount_amount }}</td>
+                      </tr>
+                      <tr>
+                        <td>Shipping Cost</td>
+                        <td><i class="fa-solid fa-indian-rupee-sign"></i> {{ order_obj.shipping_cost }}</td>
+                      </tr>
+                      <tr>
+                        <td>Coupon Amount</td>
+                        <td><i class="fa-solid fa-indian-rupee-sign"></i> {{ order_obj.coupon_amount }}</td>
+                      </tr>
+                      <tr>
+                        <td>Tax</td>
+                        <td><i class="fa-solid fa-indian-rupee-sign"></i> {{ order_obj.tax }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                {% endif %}
+                
                 {% else %}
     
                 <div class="text-center">
@@ -329,7 +399,15 @@
 {% endif %}
   
       
-
+<script>
+  function openPdfInNewWindow(orderId) {
+      // Construct the URL for the PDF view
+      var url = "{% url 'pdf_view' 0 %}".replace('0', orderId);
+      // Open the URL in a new window
+      window.open(url, '_blank');
+  }
+  </script>
+  
 
 <script>
    

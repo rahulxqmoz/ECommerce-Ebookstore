@@ -7,7 +7,9 @@ from django.contrib.auth.models import User
 from django.db.models import Q,Count
 from django.contrib.auth.hashers import check_password
 from django.contrib.sites.shortcuts import get_current_site
-
+from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage
+from validate_email import validate_email
+from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 # Create your views here.
 from django.conf import settings
@@ -45,8 +47,22 @@ def index(request):
         offers = {}
 
         for offer in products:
-            offerprice=int(offer.product_price)- int(offer.product_price) * (int(offer.offer.off_percent)/100)
-            offers[offer.id] =offerprice
+            if offer.offerprice() > 0 and offer.catoffer() > 0:
+                offerprice = min(offer.offerprice(), offer.catoffer())
+                offers[offer.id] = offerprice
+                
+            elif offer.offerprice() > 0:
+                offerprice = offer.offerprice()
+                offers[offer.id] = offerprice
+
+            elif offer.catoffer() > 0:
+                offerprice = offer.catoffer()
+                offers[offer.id] = offerprice 
+
+            else:
+                offerprice = offer.product_price
+                offers[offer.id] = offerprice
+
         if 'user' in request.session:        
             user_id=CustomUser.objects.get(id=request.user.id)
             if user_id:
@@ -72,7 +88,8 @@ def index(request):
         return render(request,'user/index.html',context)
     except Exception as e:
         print(e)
-        return HttpResponse("404 error!!!")
+        logout(request)
+        return render(request,'user/index.html',context)
 
 def user_sign_up(request):
     try:
@@ -88,6 +105,13 @@ def user_sign_up(request):
 
             exist_email = CustomUser.objects.filter(email=user_data['email'])
             exist_phone = CustomUser.objects.filter(phone=user_data['phonenumber'])
+            
+            is_valid = validate_email(email_address=user_data['email'])
+
+            if is_valid == False:
+                messages.error(request,'Enter a valid email address!!')
+                return redirect('user_sign_up')
+
 
             if exist_email:
                 messages.error(request,"Email already exists")
@@ -106,27 +130,54 @@ def user_sign_up(request):
                     user.otp=otp
                     user.referral_code=code
 
-                    
+                    # #validate_email(user_data['email'])
+                    # try:
+                    #     validate_email(user_data['email'])
+                    #     send_otp_email(user_data['email'],otp)
+                    # except ValidationError:
+                    #     messages.error(request, "Enter a valid email address")
+                    #     return redirect('user_sign_up')
+
+                   
+                    # if not validate_email(user_data['email']):
+                    #     messages.error(request, "Enter a valid email address")
+                    #     return redirect('user_sign_up')
+                    # else:
+                    #     send_otp_email(user_data['email'],otp)
                     send_otp_email(user_data['email'],otp)
                     try:
                         if user_data['referral_code']:
                             ref_user = CustomUser.objects.filter(referral_code=user_data['referral_code']).first()
                             if ref_user:
                                 referred_user = CustomUser.objects.get(id=ref_user.id)
-                                referred_user.wallet = 200
+                                referred_user.wallet += 200
                                 user.wallet = 50
                                 user.referred_by = referred_user.email
                                 referred_user.save()
+                                wallet_acc = WalletBook()
+                                wallet_acc.customer = referred_user
+                                wallet_acc.amount =  referred_user.wallet
+                                wallet_acc.description = "Referal Bonus Credited"
+                                wallet_acc.increment = True
+                                wallet_acc.save()
                                 messages.success(request, "Referral code verified")
                             else:
                                 messages.error(request, "Invalid Referral code.")
                     except Exception as e:
                         print(e)
                     user.save()
+                    if user.wallet>0:
+                        wallet_acc = WalletBook()
+                        wallet_acc.customer = user
+                        wallet_acc.amount =  user.wallet
+                        wallet_acc.description = "Sign up bonus credited"
+                        wallet_acc.increment = True
+                        wallet_acc.save()
+                
                 
                     return redirect('otp_verification',user_id=user.id)
                 else:
-                    messages.error(request,"Could not save user")
+                    messages.error(request,"Password did'nt match!!")
     except Exception as e:
         print(e)     
         messages.error(request,"Unexpected error occured!!")     
@@ -154,8 +205,12 @@ def otp_verification(request,user_id):
                     user.is_verified=True
                     user.otp = ''
                     user.save()
-                    messages.success(request, "Account verified.")
-                    return redirect('user_login')
+                    if user.wallet > 0 :
+                        messages.success(request, f"Account verified.You got a referal amount of Rs.{user.wallet} in your wallet.")
+                        return redirect('user_login')
+                    else:
+                        messages.success(request, "Account verified.")
+                        return redirect('user_login')
                 else:
                     messages.error(request, 'Invalid OTP.')
                     return redirect('otp_verification', user.id)
@@ -207,7 +262,7 @@ def cancel_registration(request,user_id):
         return redirect('user_sign_up')
 
     
-
+@cache_control(no_store=True, no_cache=True)
 def user_login(request):
     
     if 'custom_user_id' in request.session:
@@ -260,7 +315,7 @@ def user_forgotpassword(request):
             email = request.POST.get('email', None)
             if email:
                 my_user = CustomUser.objects.filter(email=email).first()
-                if my_user:
+                if my_user.is_active==True:
                     token = str(uuid.uuid4())
                     
                     forgot_password_instance, created = Forgotpassword.objects.get_or_create(user=my_user)
@@ -322,7 +377,7 @@ def change_password(request,token):
         print(e)    
     return render(request,'user/reset-password.html',context)
 
-
+@cache_control(no_store=True, no_cache=True)
 def user_logout(request):
     logout(request)
     return redirect('index')
@@ -344,12 +399,15 @@ def product_detail(request,id):
         product=Product_variant.objects.get(id=id)
         product_images=MultipleImages.objects.filter(product=product)
         offerprice=0
-        off_percent=product.offer.off_percent
-        if off_percent:
-            offerprice=int(product.product_price)- int(product.product_price) * (int(off_percent)/100)
+        # off_percent=product.offer.off_percent
+        # if off_percent:
+        #     offerprice=int(product.product_price)- int(product.product_price) * (int(off_percent)/100)
         rating_stars=range(product.rating) if product.rating > 0 else range(0)    
         category=Category.objects.all().order_by('id')
         review=ProductReview.objects.filter(product=product)
+
+        print(product.catoffer())
+        print(product.offerprice())
         
         
         context={}
@@ -358,9 +416,9 @@ def product_detail(request,id):
         Q(category=product.category) | Q(author=product.author) | Q(edition=product.edition)
         )
         relatedoffer={}
-        for offer in related_products:
-            offerprice=int(offer.product_price)- int(offer.product_price) * (int(offer.offer.off_percent)/100)
-            relatedoffer[offer.id] =offerprice
+        # for offer in related_products:
+        #     offerprice=int(offer.product_price)- int(offer.product_price) * (int(offer.offer.off_percent)/100)
+        #     relatedoffer[offer.id] =offerprice
 
     
         context={
@@ -369,7 +427,7 @@ def product_detail(request,id):
             'category':category,
             'review':review,
             'listproducts':related_products,
-            'relatedoffer':relatedoffer,
+            
             
         }    
 
@@ -388,8 +446,26 @@ def browse_products(request):
         offers = {}
 
         for offer in products:
-            offerprice=int(offer.product_price)- int(offer.product_price) * (int(offer.offer.off_percent)/100)
-            offers[offer.id] =offerprice
+            if offer.offerprice() > 0 and offer.catoffer() > 0:
+                offerprice = min(offer.offerprice(), offer.catoffer())
+                offers[offer.id] = offerprice
+                
+            elif offer.offerprice() > 0:
+                offerprice = offer.offerprice()
+                offers[offer.id] = offerprice
+
+            elif offer.catoffer() > 0:
+                offerprice = offer.catoffer()
+                offers[offer.id] = offerprice 
+
+            else:
+                offerprice = offer.product_price
+                offers[offer.id] = offerprice
+            
+
+            
+           
+                   
                 
          
         sort_criteria = request.GET.get('sort_criteria')
@@ -416,11 +492,21 @@ def browse_products(request):
                 if(sort_criteria=='0'):
                     products=Product_variant.objects.filter(Q(is_active=True) & Q(product__is_active=True)) 
 
-            
+         # Paginate the products
+        paginator = Paginator(products, 6)  # Show 6 products per page
+        page_number = request.GET.get('page')
+        try:
+            paginated_products = paginator.page(page_number)
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page.
+            paginated_products = paginator.page(1)
+        except EmptyPage:
+            # If page is out of range (e.g. 9999), deliver last page of results.
+            paginated_products = paginator.page(paginator.num_pages)    
 
 
         context={
-            'listproducts':products,
+            'listproducts':paginated_products,
             'offerprice':offers,
             'category':category
         }
@@ -439,15 +525,32 @@ def write_review(request):
                 rating=request.POST.get('rating')
                 review_desc=request.POST.get('review_desc')
                 product_id=request.POST.get('id')
+                title=request.POST.get('title')
                 if product_id is None:  
                     return HttpResponse("Product ID is missing in the form data.")
-                product=Product_variant.objects.get(product=product_id)
+                product=Product_variant.objects.get(id=product_id)
+                print(product.variant_name)
                 user_id = CustomUser.objects.get(id=request.user.id)
-                reviewcheck= ProductReview.objects.get(user=user_id,product=product)
-                if reviewcheck:
-                    messages.error(request,'Review already exists!!!')
-                    return redirect('product_detail',id=product_id) 
-                review=ProductReview(product=product,rating=rating,text=review_desc,user=user_id)
+
+                try:
+                    reviewcheck= ProductReview.objects.get(user=user_id,product=product)
+                    if reviewcheck:
+                        messages.error(request,'Review already exists!!!')
+                        return redirect('product_detail',id=product_id)
+                except ProductReview.DoesNotExist:  
+                    pass  
+              
+                try:
+                    order_product = OrderProduct.objects.filter(Q(product=product) & Q(customer=user_id) & ~Q(item_cancel=True) & ~Q(return_request=True) & Q(order_id__status="Delivered")).first()
+                    if order_product is not None:
+                        print(order_product.product.variant_name)
+                    else:
+                        messages.error(request, 'You cant review the product. You have to buy the product to review the book!!!')
+                        return redirect('product_detail',id=product_id)
+                except OrderProduct.DoesNotExist:
+                    messages.error(request,'You cant review the product.You have to buy the product for review the book!!!')
+                    return redirect('product_detail',id=product_id)
+                review=ProductReview(product=product,rating=rating,text=review_desc,user=user_id,title=title)
                 review.save()
                 messages.success(request,'Review saved!!!')
                 return redirect('product_detail',id=product_id)  
@@ -591,7 +694,7 @@ def change_email(request,id):
         print(e)
 
 
-
+@cache_control(no_cache=True, no_store=True) 
 def change_password_user(request,id):
     if 'custom_user_id' in request.session:
         return redirect('admin_dashboard')
@@ -629,9 +732,9 @@ def change_password_user(request,id):
 
             user.set_password(newpassword)
             user.save()
-            messages.success(request,"Password successfully changed.")
-            return render(request,'user/user_profile.html',context)
-
+            messages.success(request,"Password successfully changed.Login again!!")
+            logout(request)
+            return redirect('user_login')
         else:
             messages.error(request,"Password doesnt match")
             return redirect("user_profile")
@@ -766,7 +869,7 @@ def order_summary(request,id):
             print(orders)
            
             context = {
-                'orders': orders,
+                'orders': orders, 'order_obj':order_obj
             }
     except Exception as e:
         print(e)
@@ -824,3 +927,27 @@ def proceed_to_pay(request):
         'amount_paise': amount_paise,  # Pass the amount in paise to the template
     }
     return render(request,'user/procced_to_pay.html',context)
+
+
+def contact(request):
+    try:
+        if request.method=="POST":
+            name=request.POST.get('username')
+            email=request.POST.get('useremail')
+            subject=request.POST.get('subject')
+            message=request.POST.get('message')
+
+            subject = f"New message from {name}: {subject}"
+            message = f"From: {name}\nEmail: {email}\n\n{message}"
+            from_email = settings.EMAIL_HOST_USER
+            recipient_list = [settings.EMAIL_HOST_USER]  
+            
+        
+            send_mail(subject, message, from_email, recipient_list)
+
+            messages.success(request,"Message send successfully")
+            return redirect('contact')
+
+    except Exception as e:
+        print(e)        
+    return render(request,'user/contact.html')
