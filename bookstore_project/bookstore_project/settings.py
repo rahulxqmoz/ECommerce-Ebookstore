@@ -31,7 +31,7 @@ SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['3.107.77.41','*']
 
 
 # Application definition
@@ -106,12 +106,12 @@ AUTHENTICATION_BACKENDS = [
 
 DATABASES = {
     'default': {
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'ebook_storedb',
-       'USER': 'postgres',
-       'PASSWORD': 'Rahulrj@97',
+       'ENGINE': 'django.db.backends.postgresql_psycopg2',
+       'NAME': 'ecommbook',
+       'USER': 'admin',
+       'PASSWORD': 'password',
        'HOST': 'localhost',
-       'PORT': '5432',
+       'PORT': '',
     }
 }
 
