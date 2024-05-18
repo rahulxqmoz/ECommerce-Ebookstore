@@ -325,7 +325,7 @@ def admin_category(request):
         context['offers'] = offers
 
         if request.method == 'POST':
-            category_name = request.POST.get('categoryName')
+            category_name = request.POST.get('categoryName').strip()
 
             # Check if category with the same name already exists
             existing_category = Category.objects.filter(category_name__iexact=category_name).first()
@@ -538,7 +538,7 @@ def admin_edit_author(request,id):
          
             author_name=request.POST.get('name').strip() 
             if author_name != author.author_name:
-                exitscat = Author.objects.filter(author_name=author_name)
+                exitscat = Author.objects.filter(author_name__iexact=author_name)
                 if exitscat.exists():
                     messages.error(request, "Author already exists")
                     return redirect('admin_edit_author', id=id)
@@ -587,7 +587,7 @@ def admin_add_offer(request):
     try:
 
         if request.method=='POST':
-            offer_name=request.POST.get('offername')
+            offer_name=request.POST.get('offername').strip()
             off_percent = request.POST.get('offpercent')
             
             existoffer=Offer.objects.filter(name__iexact=offer_name)
@@ -633,9 +633,9 @@ def admin_edit_offer(request,id):
         if request.method=="POST":
                
 
-            offer_name=request.POST.get('offername') 
+            offer_name=request.POST.get('offername').strip() 
             if offer_name != offer.name:
-                exitscat = Offer.objects.filter(name=offer_name)
+                exitscat = Offer.objects.filter(name__iexact=offer_name)
                 if exitscat.exists():
                     messages.error(request, "Offer already exists")
                     return redirect('admin_edit_offer', id=id)
@@ -688,7 +688,7 @@ def admin_delete_offer(request,id):
 def admin_add_product(request):
     try:
         if request.method=="POST":
-            product_name=request.POST.get('productname')
+            product_name=request.POST.get('productname').strip()
             product=Products.objects.filter(product_title__iexact=product_name).first()
             token=product_name.replace(" ","-")
             if product:
@@ -706,6 +706,7 @@ def admin_add_product(request):
             productsave.save()
 
             messages.success(request,"Product Added Successfully!!")
+            return redirect('admin_product')
 
     except Exception as e:
         print(e)
@@ -740,7 +741,7 @@ def admin_product_edit(request,id):
 
             product_name= request.POST.get('name').strip()
             if product_name != product.product_title:
-                exitscpro = Products.objects.filter(product_title=product_name)
+                exitscpro = Products.objects.filter(product_title__iexact=product_name)
                 if exitscpro.exists():
                     messages.error(request, "Product already exists")
                     return redirect('admin_product_edit', id=id)
@@ -857,7 +858,7 @@ def admin_edit_edition(request,id):
               
             edition_name=request.POST.get('name').strip() 
             if edition_name != edition.editons_name:
-                exitsedit = Editions.objects.filter(editons_name=edition_name)
+                exitsedit = Editions.objects.filter(editons_name__iexact=edition_name)
                 if exitsedit.exists():
                     messages.error(request, "Edition already exists")
                     return redirect('admin_edit_edition', id=id)
@@ -953,6 +954,17 @@ def add_product_variant(request):
                 return redirect('admin_add_product_variant')
             except Product_variant.DoesNotExist:
                 pass
+                          
+
+             # Check if a variant with the same product and category already exists
+            if Product_variant.objects.filter(product=productobj,author=authprobj).exists():
+                # Get the name of the category to which the product is already allocated
+                allocated_variant = Product_variant.objects.filter(product=productobj, author=authprobj).first()
+                if allocated_variant:
+                    allocated_category =allocated_variant.category.category_name
+                    if allocated_category!=categoryobj.category_name:
+                        messages.error(request,f'{productobj.product_title} is already allocated to the category "{allocated_category}".')
+                        return redirect('admin_add_product_variant')
 
             
             variant_name=f"{productobj.product_title} {authprobj.author_name} {editionobj.editons_name}"
@@ -1102,6 +1114,24 @@ def admin_edit_variant(request,id):
                 offerobj=None    
             
             editionobj=Editions.objects.get(id=edition)
+            try:
+                if productobj!=variant.product or authprobj!=variant.author or editionobj!=variant.edition:
+                    exitsproductvariant = Product_variant.objects.get(product=productobj,author=authprobj,edition=editionobj)
+                    if exitsproductvariant != variant:
+                        if exitsproductvariant:
+                            messages.error(request, "Product Variant already exists")
+                            return redirect('admin_edit_variant', id=id) 
+            except Product_variant.DoesNotExist:
+                pass 
+            if Product_variant.objects.filter(product=productobj,author=authprobj).exists():
+                # Get the name of the category to which the product is already allocated
+                allocated_variant = Product_variant.objects.filter(product=productobj, author=authprobj).first()
+                if allocated_variant:
+                    allocated_category =allocated_variant.category.category_name
+                    if allocated_category!=categoryobj.category_name:
+                        messages.error(request,f'{productobj.product_title} is already allocated to the category "{allocated_category}".')
+                        return redirect('admin_add_product_variant')
+            
 
             variant.product=productobj
             variant.category=categoryobj
@@ -1111,12 +1141,8 @@ def admin_edit_variant(request,id):
             variant.product_price=price
             variant.stock=stock
             variant.rating=rating
-
-            exitsproductvariant = Product_variant.objects.get(product=productobj,author=authprobj,edition=editionobj)
-            if exitsproductvariant != variant:
-                if exitsproductvariant:
-                    messages.error(request, "Product Variant already exists")
-                    return redirect('admin_edit_variant', id=id)    
+            
+             
                
                 
            
@@ -1197,9 +1223,9 @@ def admin_add_coupon(request):
 
             try:
                 existing_coupon = Coupon.objects.filter(coupon_code__iexact=couponcode)
-                
-                messages.error(request, "Coupon already exists!!")
-                return redirect('admin_add_coupon')
+                if existing_coupon:
+                    messages.error(request, "Coupon already exists!!")
+                    return redirect('admin_add_coupon')
             except Coupon.DoesNotExist:
                 pass
             
@@ -1213,8 +1239,8 @@ def admin_add_coupon(request):
                 return redirect('admin_add_coupon')
 
             # Validate min_amount
-            if not min_amount.isdigit() or int(min_amount) < 500:
-                messages.warning(request, "Minimum amount must be a number greater than or equal to 500!")
+            if not min_amount.isdigit() or int(min_amount) < 200:
+                messages.warning(request, "Minimum amount must be a number greater than or equal to 200!")
                 return redirect('admin_add_coupon')
 
             # Validate off_percent
@@ -1305,9 +1331,42 @@ def admin_edit_coupon(request, id):
             expiry_date_str = request.POST.get("expirydate")
             coupon_stock = request.POST.get("couponstock")
 
-            if Coupon.objects.exclude(id=id).filter(coupon_code=coupon_code).exists():
+            if Coupon.objects.exclude(id=id).filter(coupon_code__iexact=coupon_code).exists():
                 messages.error(request, 'Coupon code must be unique.')
                 return redirect('admin_edit_coupon',id=id)
+                 # Validate coupon_code
+            if coupon_code and coupon_code.islower():
+                messages.warning(request, "Coupon code cannot contain small letters!")
+                return redirect('admin_edit_coupon',id=id)
+            
+            
+
+            # Validate min_amount
+            if not min_amount.isdigit() or int(min_amount) < 200:
+                messages.warning(request, "Minimum amount must be a number greater than or equal to 200!")
+                return redirect('admin_edit_coupon',id=id)
+
+            # Validate off_percent
+            if not off_percent.isdigit() or int(off_percent) <= 0:
+                messages.warning(request, "Off percent must be a positive number greater than 0!")
+                return redirect('admin_edit_coupon',id=id)
+
+            # Validate max_discount
+            if not max_discount.isdigit() or int(max_discount) < int(off_percent):
+                messages.warning(request, "Max discount must be a number greater than or equal to Off percent!")
+                return redirect('admin_add_coupon')
+            
+            # Validate expiry_date
+            try:
+                expiry_date = datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                messages.warning(request, "Invalid expiry date format. Please use YYYY-MM-DD.")
+                return redirect('admin_add_coupon')
+
+            if expiry_date <= timezone.now().date():
+                messages.warning(request, "Expiry date should be in the future!")
+                return redirect('admin_add_coupon')
+
 
             Coupon.objects.filter(id = id).update(
                 coupon_code = coupon_code,

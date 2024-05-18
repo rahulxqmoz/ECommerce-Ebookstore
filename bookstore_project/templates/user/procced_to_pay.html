@@ -91,6 +91,19 @@ var options = {
 };
 
 document.getElementById('money').onclick = function(e){
+
+   // Get the amount input value
+   var inputAmount = document.getElementById('addMoney').value;
+    // Convert inputAmount to a number
+    var amount = parseInt(inputAmount);
+
+    // Check if amount is valid
+    if (amount <= 0 || amount < 50) {
+        // Show error message
+        alert("Please enter an amount greater than 0 and at least 50 INR.");
+        e.preventDefault(); // Prevent form submission
+        return; // Exit function
+    }
     // Get the amount input value
     var inputAmount = document.getElementById('addMoney').value;
     if (inputAmount) {

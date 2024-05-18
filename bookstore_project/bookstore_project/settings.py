@@ -161,6 +161,7 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS=[
     BASE_DIR / "static"
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
 AUTH_USER_MODEL = 'user_app.CustomUser'
 
 MEDIA_URL = '/media/'

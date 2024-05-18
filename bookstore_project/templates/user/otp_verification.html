@@ -38,6 +38,8 @@
                         </form>
                     </div>
                     <div class="card-footer text-muted">
+                        <a href="{% url 'cancel_registration' user.id %}"><button type="submit" class="btn btn-primary">Cancel Sign up</button></a>
+
                         <a href="{% url 'regenerate_otp' user.id %}" class="btn btn-primary">Regenerate OTP</a>
                     </div>
                 </div>

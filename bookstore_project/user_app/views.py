@@ -8,6 +8,8 @@ from django.db.models import Q,Count
 from django.contrib.auth.hashers import check_password
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage
+from django.urls import reverse
+from django.utils.html import format_html
 from validate_email import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
@@ -472,10 +474,12 @@ def browse_products(request):
         if sort_criteria:
             if(sort_criteria=="newest"):
                 products=Product_variant.objects.filter(is_active=True).order_by('-created_date')
-            if(sort_criteria=="price_low_to_high"):
-                products=Product_variant.objects.filter(is_active=True).order_by('product_price')
-            if(sort_criteria=="price_high_to_low"):
-                products=Product_variant.objects.filter(is_active=True).order_by('-product_price')
+            if sort_criteria == "price_low_to_high":
+                products = Product_variant.objects.filter(is_active=True)
+                products = sorted(products, key=lambda x: x.price_sub_total())
+            if sort_criteria == "price_high_to_low":
+                products = Product_variant.objects.filter(is_active=True)
+                products = sorted(products, key=lambda x: x.price_sub_total(), reverse=True)
             if(sort_criteria=="popular"):
                 products_popular = OrderProduct.objects.values('product').annotate(buy_count=Count('id')).order_by('-buy_count')
                 
@@ -914,11 +918,13 @@ def proceed_to_pay(request):
             wallet_acc.description = "Added Money to wallet"
             wallet_acc.increment = True
             wallet_acc.save()
-            messages.success(request, f"Amount Rs.{amount} added to the wallet!!")
-            return redirect('proceed_to_pay')
+            wallet_url = reverse('view_wallet')
+            message = format_html("Amount Rs.{} added to the wallet!!. Check wallet balance: <a href='{}'>{}</a>", amount, wallet_url, 'Go to account statement')
+            messages.success(request, message)
+            return redirect('user_profile')
         else:
             messages.error(request,"Payment request failed!check internet connection!")
-            return redirect('proceed_to_pay')
+            return redirect('user_profile')
 
 
 
@@ -926,7 +932,7 @@ def proceed_to_pay(request):
         'user': user,
         'amount_paise': amount_paise,  # Pass the amount in paise to the template
     }
-    return render(request,'user/procced_to_pay.html',context)
+    return render(request,'user/user_profile.html',context)
 
 
 def contact(request):

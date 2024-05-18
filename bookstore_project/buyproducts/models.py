@@ -129,6 +129,19 @@ class Product_variant(models.Model):
             return self.catoffer()
         else:
             return self.product_price
+        
+    def category_name(self):
+        if self.offerprice() > 0 and self.catoffer() > 0:
+            if self.offerprice() < self.catoffer() :
+                return f'Product Offer - {self.offer.off_percent}'
+            else:
+                return f'Category Offer - {self.category.offer.off_percent}'
+        elif self.offerprice() > 0:
+            return f'Product Offer - {self.offer.off_percent}'
+        elif self.catoffer() > 0:
+            return f'Category Offer - {self.category.offer.off_percent}'
+        else:
+            return f'No offer'    
 
     def __str__(self) -> str:
         return self.variant_name

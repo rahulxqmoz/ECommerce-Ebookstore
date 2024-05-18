@@ -2,7 +2,7 @@ from decimal import Decimal,ROUND_HALF_UP
 from django.contrib import messages
 from django.shortcuts import render,redirect
 import pdb
-from order.models import Order
+from order.models import Order, OrderAddress
 from user_app.models import CustomUser,UserAddress, WalletBook
 from buyproducts.models import Product_variant
 from . models import Cart,CartItem, Coupon
@@ -494,6 +494,18 @@ def place_order(request,id):
                 my_order = Order()
                 my_order.user = user
                 my_order.address = useraddress
+                order_address = OrderAddress.objects.create(
+                    user=useraddress.user,
+                    name=useraddress.name,
+                    alternative_mobile=useraddress.alternative_mobile,
+                    address=useraddress.address,
+                    nearby_location=useraddress.nearby_location,
+                    town=useraddress.town,
+                    zip_code=useraddress.zip_code,
+                    district=useraddress.district,
+                    state=useraddress.state
+                )
+                my_order.order_address=order_address
                 my_order.subtotal = withoutoffer
                 my_order.order_total = withoffer  # product's total amount.
                 my_order.discount_amount = discount_amount
@@ -581,6 +593,18 @@ def place_order(request,id):
                 my_order = Order()
                 my_order.user = user
                 my_order.address = useraddress
+                order_address = OrderAddress.objects.create(
+                    user=useraddress.user,
+                    name=useraddress.name,
+                    alternative_mobile=useraddress.alternative_mobile,
+                    address=useraddress.address,
+                    nearby_location=useraddress.nearby_location,
+                    town=useraddress.town,
+                    zip_code=useraddress.zip_code,
+                    district=useraddress.district,
+                    state=useraddress.state
+                )
+                my_order.order_address=order_address
                 my_order.subtotal = withoutoffer
                 my_order.order_total = withoffer  # product's total amount.
                 my_order.discount_amount = discount_amount

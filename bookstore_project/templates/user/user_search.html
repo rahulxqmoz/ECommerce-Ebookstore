@@ -85,10 +85,9 @@
                     {% endfor %}
                        
                     {% else %}
-                    <div class="row">
-                        <div class="col-12">
-                            <h3>No result found!! <a href="{% url 'index' %}" target=""><button>Back to Home page</button></a>
-                            </h3>
+                    <div class="col-lg-12">
+                        <div class="alert alert-info" role="alert">
+                            <strong>No products found!</strong> Unfortunately, there are no products matching your criteria. <a href="{% url 'index' %}">Back to home</a>
                         </div>
                     </div>
                      {% endif %}

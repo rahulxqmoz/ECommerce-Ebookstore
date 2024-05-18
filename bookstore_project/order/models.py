@@ -15,6 +15,21 @@ class Payments(models.Model):
 
     def __str__(self):
         return self.payment_id
+    
+class OrderAddress(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    name = models.CharField(max_length=150, blank=True)
+    alternative_mobile = models.CharField(max_length=10, blank=True, null=True)
+    address = models.CharField(max_length=255, null=True)
+    town = models.CharField(max_length=150, null=False)
+    zip_code = models.IntegerField(null=False)
+    nearby_location = models.CharField(max_length=255, blank=True)
+    district = models.CharField(max_length=150, null=False)
+    state = models.CharField(max_length=150, null=False)
+    created = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email}"    
 
 class Order(models.Model):
     STATUS = {
@@ -31,6 +46,7 @@ class Order(models.Model):
     payment = models.ForeignKey(Payments, on_delete=models.SET_NULL, null=True)
     address = models.ForeignKey(UserAddress, on_delete=models.SET_NULL, null=True, blank=True)
     order_id = models.CharField(max_length=200, blank=True)
+    order_address=models.ForeignKey(OrderAddress, on_delete=models.SET_NULL, null=True, blank=True)
     subtotal = models.FloatField(blank=True)
     order_total = models.FloatField()
     discount_amount = models.FloatField(default=0, blank=True)
