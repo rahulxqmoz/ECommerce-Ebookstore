@@ -357,7 +357,7 @@ def place_order(request,id):
         payments={}
         order_id=''
         order=''
-        callback= "http://" + "127.0.0.1:8000" + "/cart/place_order/{}".format(add_id)
+        callback= "http://" + "3.107.77.41" + "/cart/place_order/{}".format(add_id)
         payment_method = request.GET.get('payment_method')
         razorpay_id=request.GET.get('razor_id')
         #useraddress=UserAddress.objects.get(id=id)
