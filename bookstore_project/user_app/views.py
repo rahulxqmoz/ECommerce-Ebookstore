@@ -108,7 +108,7 @@ def user_sign_up(request):
             exist_email = CustomUser.objects.filter(email=user_data['email'])
             exist_phone = CustomUser.objects.filter(phone=user_data['phonenumber'])
             
-            is_valid = validate_email(email_address=user_data['email'])
+            is_valid = validate_email(user_data['email'])
 
             if is_valid == False:
                 messages.error(request,'Enter a valid email address!!')
