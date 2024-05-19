@@ -107,7 +107,7 @@ AUTHENTICATION_BACKENDS = [
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-       'NAME': 'ecommbook',
+       'NAME': 'djangobookstore',
        'USER': 'admin',
        'PASSWORD': 'password',
        'HOST': 'localhost',
