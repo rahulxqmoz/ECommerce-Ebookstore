@@ -31,7 +31,7 @@ SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-ALLOWED_HOSTS = ['54.252.57.200','localhost']
+ALLOWED_HOSTS = ['54.79.191.221','localhost']
 
 
 # Application definition
