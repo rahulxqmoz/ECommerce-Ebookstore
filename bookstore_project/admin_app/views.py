@@ -1128,7 +1128,7 @@ def admin_edit_variant(request,id):
                     allocated_category =allocated_variant.category.category_name
                     if allocated_category!=categoryobj.category_name:
                         messages.error(request,f'{productobj.product_title} is already allocated to the category "{allocated_category}".')
-                        return redirect('admin_add_product_variant')
+                        return redirect('admin_edit_variant', id=id)
             
 
             variant.product=productobj
