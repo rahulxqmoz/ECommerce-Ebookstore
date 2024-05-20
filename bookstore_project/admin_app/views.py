@@ -329,6 +329,7 @@ def admin_category(request):
 
             # Check if category with the same name already exists
             existing_category = Category.objects.filter(category_name__iexact=category_name).first()
+            print(existing_category)
             if existing_category:
                 messages.error(request, f"Category '{category_name}' already exists!!")
                 return redirect('admin_category')
@@ -340,7 +341,7 @@ def admin_category(request):
 
             category_description = request.POST.get('categoryDescription')
             category_offer_id = request.POST.get('offer')
-            cat_discount = request.POST.get('maxamount')
+            #cat_discount = request.POST.get('maxamount')
 
             # Get offer object if it exists
             if category_offer_id:
@@ -352,14 +353,14 @@ def admin_category(request):
                 offer_obj = None
 
             # Set max discount
-            max_discount = cat_discount if cat_discount else None
+            #max_discount = cat_discount if cat_discount else None
 
             category = Category(
                 category_name=category_name,
                 category_description=category_description,
                 slug=category_slug,
                 offer=offer_obj,
-                max_discount=max_discount
+                
             )
 
             if request.FILES:
@@ -406,11 +407,9 @@ def admin_edit_category(request, id):
             new_category_name = request.POST.get('name').strip()
             new_category_description = request.POST.get('description')
             new_category_offer_id = request.POST.get('offer')
-            new_category_max_discount = request.POST.get('maxamount')
+            #new_category_max_discount = request.POST.get('maxamount')
 
-            if Decimal(new_category_max_discount) <=0 :
-                messages.error(request, "Maximum discount cant be negative")
-                return redirect('admin_edit_category', id=id)
+           
 
 
             if request.FILES:
@@ -427,8 +426,7 @@ def admin_edit_category(request, id):
             category.category_name = new_category_name
             category.category_description = new_category_description
 
-            if new_category_max_discount != '':
-                category.max_discount = new_category_max_discount
+           
 
             # Check if a new offer has been selected
             if new_category_offer_id != '':
