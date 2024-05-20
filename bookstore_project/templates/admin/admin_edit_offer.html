@@ -48,7 +48,7 @@
     // Form validation using JavaScript
     document.getElementById('offerForm').addEventListener('submit', function(event) {
         // Validate Offer Name
-        var offerName = document.getElementById('offerName').value;
+        var offerName = document.getElementById('offerName').value.trim();
         if (!offerName) {
             event.preventDefault();
             document.getElementById('offerName').classList.add('is-invalid');
