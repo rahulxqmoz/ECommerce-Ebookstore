@@ -357,7 +357,7 @@ def place_order(request,id):
         payments={}
         order_id=''
         order=''
-        callback= "http://" + "54.252.57.200" + "/cart/place_order/{}".format(add_id)
+        callback= "http://" + "127.0.0.1:8000" + "/cart/place_order/{}".format(add_id)
         payment_method = request.GET.get('payment_method')
         razorpay_id=request.GET.get('razor_id')
         #useraddress=UserAddress.objects.get(id=id)
@@ -410,6 +410,7 @@ def place_order(request,id):
             withoffer=withoffer+shipping_cost 
         if category_offeramount>0:
             withoffer=withoffer-category_offeramount
+            
         #validating user address    
         try:
             useraddress = UserAddress.objects.get(id=id)
@@ -590,6 +591,12 @@ def place_order(request,id):
                     if withoffer > 1000:
                         messages.error(request,'Order above Rs.1000 is not allowed for Cash On Delivery.Use other payments options!')
                         return redirect('place_order',id=id) 
+                    
+                if paymentMethod=="wallet":
+                    if withoffer > user.wallet:
+                        messages.error(request,'No sufficient balance in your wallet to make this order!')
+                        return redirect('place_order',id=id) 
+
                 my_order = Order()
                 my_order.user = user
                 my_order.address = useraddress
