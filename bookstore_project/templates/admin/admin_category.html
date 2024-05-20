@@ -26,10 +26,7 @@
             <label for="categoryImage" class="form-label">Category Image</label>
             <input type="file" class="form-control" id="categoryImage" name="categoryImage" accept="image/*" required>
         </div>
-        <div class="mb-3">
-            <label for="maxAmount" class="form-label">Maximum Amount</label>
-            <input type="number" class="form-control" id="maxAmount" name="maxamount">
-        </div>
+       
         <button type="submit" class="btn btn-primary">Submit</button>
         <div class="row d-flex justify-content-center" style="align-items: center"> <span class="text-danger fw-5">
             {% for message in messages %}
@@ -65,12 +62,7 @@
             event.preventDefault();
             return;
         }
-        var maxAmount = parseFloat(document.getElementById('maxAmount').value);
-        if (isNaN(maxAmount) || maxAmount < 0 || maxAmount > 500) {
-            alert('Maximum Amount must be a non-negative integer not exceeding 500');
-            event.preventDefault();
-            return;
-        }
+      
     });
 </script>
 
