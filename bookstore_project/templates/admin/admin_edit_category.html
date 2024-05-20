@@ -71,10 +71,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="row mb-4">
-                        <label for="maxAmount" class="form-label">Maximum Amount</label>
-                        <input type="number" class="form-control" id="maxAmounttt" name="maxamount" value="{{category.max_discount}}">
-                    </div>
+             
                     <!-- Description input -->
                     <div class="form-outline mb-4">
                         <textarea class="form-control bg-grey text-black" id="productDesc" rows="4" name="description"> {{ category.category_description }} </textarea>
@@ -120,12 +117,7 @@
                 }
             }
 
-            // Validate Maximum Amount
-            var maxAmount = parseInt(document.getElementById('maxAmounttt').value);
-            if (isNaN(maxAmount) || maxAmount < 0 || maxAmount % 1 !== 0 || maxAmount > 500) {
-                alert('Maximum Amount must be a non-negative integer not exceeding 500');
-                return;
-            }
+           
 
             // If all validations pass, submit the form
             this.submit();
