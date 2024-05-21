@@ -289,9 +289,16 @@ document.getElementById('money').onclick = function(e){
 
 <script>
     function validatePassword() {
+        var currentPassword = document.getElementById("myInput").value;
         var newPassword = document.getElementById("newpassword").value;
         var confirmPassword = document.getElementById("confirm_password").value;
         var strengthSpan = document.getElementById("passwordStrength");
+
+        // Check if current password is null or less than 8 characters
+        if (currentPassword === "" || currentPassword.length < 8) {
+            strengthSpan.innerText = "Current password must not be empty and should be at least 8 characters long";
+            return false;
+        }
 
         // Check if new password and confirm password match
         if (newPassword !== confirmPassword) {
@@ -304,7 +311,7 @@ document.getElementById('money').onclick = function(e){
         var upperCaseLetters = /[A-Z]/g;
 
         if (!lowerCaseLetters.test(newPassword) || !upperCaseLetters.test(newPassword) || newPassword.length < 8) {
-            strengthSpan.innerText = "Password must be at least 8 characters long and contain at least one uppercase letter and one lowercase letter!!";
+            strengthSpan.innerText = "Password must be at least 8 characters long and contain at least one uppercase letter and one lowercase letter";
             return false;
         }
 
