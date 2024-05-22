@@ -146,12 +146,13 @@ def update_cart_quantity(request):
                 user = CustomUser.objects.get(id=request.user.id)
                 cart_item = CartItem.objects.filter(customer=user)
             if new_quantity!=0:
+                if cart_item.product.stock <= 0:
+                    return JsonResponse({'error': 'Item is out of stock!!Please try again later!!','hide_quantity': True})    
+            if new_quantity!=0:
                 if cart_item.product.stock < new_quantity:
 
                     return JsonResponse({'error': 'Item stock exceeded!!','hide_quantity': True})
-            if new_quantity!=0:
-                if cart_item.product.stock <= 0:
-                    return JsonResponse({'error': 'Item is out of stock!Please try again later!','hide_quantity': True})            
+                        
            
             # Update the quantity of the cart item
             if new_quantity!=0:
