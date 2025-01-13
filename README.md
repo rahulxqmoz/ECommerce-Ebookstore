@@ -48,28 +48,37 @@ Before you begin, make sure you have the following installed:
 
 ---
 
-2. Set Up a Virtual Environment
-bash
-Copy code
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/rahulxqmoz/ECommerce-Ebookstore.git
+cd estore
+--- 
+### 2. Set Up a Virtual Environment
+
+```bash
 python3 -m venv venv
 source venv/bin/activate
-3. Install Dependencies
-bash
-Copy code
+
+### 3. Install Dependencies
+```bash
 pip install -r requirements.txt
-4. Apply Migrations
-bash
-Copy code
+
+### 4. Apply Migrations
+```bash
 python manage.py makemigrations
 python manage.py migrate
-5. Create a Superuser
-bash
-Copy code
+
+### 5. Create a Superuser
+```bash
 python manage.py createsuperuser
-6. Collect Static Files
-bash
-Copy code
+
+### 6. Collect Static Files
+```bash
 python manage.py collectstatic
+
 Deployment
 1. Set Up AWS EC2 Instance
 Launch an EC2 instance (Ubuntu).
