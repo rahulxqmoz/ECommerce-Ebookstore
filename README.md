@@ -50,8 +50,6 @@ Before you begin, make sure you have the following installed:
 
 ## Installation
 
-## Installation
-
 ### 1. Clone the Repository
 
 ```bash
