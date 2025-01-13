@@ -55,7 +55,8 @@ Before you begin, make sure you have the following installed:
 ```bash
 git clone https://github.com/rahulxqmoz/ECommerce-Ebookstore.git
 cd estore
---- 
+```bash
+
 ### 2. Set Up a Virtual Environment
 
 ```bash
