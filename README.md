@@ -1,6 +1,6 @@
 # Online Bookstore
 
-An ecommerce platform for buying and selling books online. Built with Django and deployed using AWS EC2, Gunicorn, and Nginx.
+An eCommerce platform designed for buying and selling books online. This application allows users to browse books by category, author, or title, add them to the shopping cart, place orders, and make payments securely through Razorpay. Admins can manage books, orders, and user profiles through a dedicated admin panel. Built with Django and deployed using AWS EC2, Gunicorn, and Nginx.
 
 ## Features
 
@@ -55,7 +55,7 @@ Before you begin, make sure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/rahulxqmoz/ECommerce-Ebookstore.git
+git clone https://github.com/your-repo/estore.git
 cd estore
 ```
 
@@ -116,5 +116,9 @@ sudo nano /etc/systemd/system/online-bookstore.service
 ```
 ## Usage
 Access the website via the domain or public IP of your EC2 instance.
-Admin panel: /admin_home
-Start exploring the bookstore!
+Admin panel: /admin_home.
+Start exploring the bookstore!.
+
+## Resources
+- **GitHub Repository:** [ECommerce-Ebookstore](https://github.com/rahulxqmoz/ECommerce-Ebookstore)
+- **Live Link:** [ECommerce-Ebookstore](https://ebookstores.xyz)
