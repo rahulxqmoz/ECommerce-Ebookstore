@@ -1,130 +1,103 @@
 Online Bookstore
-An ecommerce platform for buying and selling books online. Built with Django, deployed using AWS EC2, Gunicorn, and Nginx.
+An ecommerce platform for buying and selling books online. Built with Django and deployed using AWS EC2, Gunicorn, and Nginx.
 
 Features
-User Management: Registration, login, and profile management.
-
-Book Catalog: Browse books by category, author, or title.
-
-Search Functionality: Search books by keywords.
-
-Shopping Cart: Add, update, or remove books from the cart.
-
-Order Management: Place orders and view order history.
-
-Payment Gateway: Secure payment integration (Razorpay).
-
-Admin Panel: Manage books, orders, and users.
-
+User Management
+Registration, login, and profile management.
+Book Catalog
+Browse books by category, author, or title.
+Search Functionality
+Search books by keywords.
+Shopping Cart
+Add, update, or remove books from the cart.
+Order Management
+Place orders and view order history.
+Payment Gateway
+Secure payment integration via Razorpay.
+Admin Panel
+Manage books, orders, and users.
 Tech Stack
 Backend: Django
-
 Frontend: Django Templates, HTML, CSS, JavaScript
-
 Database: PostgreSQL
-
 Deployment: AWS EC2, Gunicorn, Nginx
-
 Prerequisites
+Before you begin, make sure you have the following installed:
+
 Python 3.8
-
 PostgreSQL
-
-AWS EC2 Instance
-
+AWS EC2 instance
 Nginx
-
 Gunicorn
-
 Installation
-Clone the Repository
+1. Clone the Repository
+bash
+Copy code
 git clone https://github.com/your-repo/estore.git
-
 cd estore
-
-Set Up a Virtual Environment
+2. Set Up a Virtual Environment
+bash
+Copy code
 python3 -m venv venv
-
 source venv/bin/activate
-
-Install Dependencies
+3. Install Dependencies
+bash
+Copy code
 pip install -r requirements.txt
-Apply Migrations
+4. Apply Migrations
+bash
+Copy code
 python manage.py makemigrations
-
 python manage.py migrate
-
-Create a Superuser
+5. Create a Superuser
+bash
+Copy code
 python manage.py createsuperuser
-Collect Static Files
+6. Collect Static Files
+bash
+Copy code
 python manage.py collectstatic
 Deployment
-Set Up AWS EC2 Instance
+1. Set Up AWS EC2 Instance
 Launch an EC2 instance (Ubuntu).
-
 Configure security groups to allow HTTP (port 80) and SSH (port 22).
-
-Install Required Software
+2. Install Required Software
+bash
+Copy code
 sudo apt update
-
 sudo apt install python3-pip python3-venv nginx
-
-Transfer Project Files
-Git repository to transfer project files to the EC2 instance.
-Set Up Gunicorn
-pip install gunicorn
+3. Transfer Project Files to EC2
+Clone the Git repository to transfer project files to the EC2 instance.
+4. Set Up Gunicorn
 Install Gunicorn:
+
+bash
+Copy code
 pip install gunicorn
 Run Gunicorn:
+
+bash
+Copy code
 gunicorn --bind 0.0.0.0:8000 projectname.wsgi:application
-Configure Nginx
+5. Configure Nginx
 Create a new Nginx configuration file:
+
+bash
+Copy code
 sudo nano /etc/nginx/sites-available/online-bookstore
-Start Gunicorn as a Service
+6. Start Gunicorn as a Service
+Create a systemd service file for Gunicorn:
+
+bash
+Copy code
 sudo nano /etc/systemd/system/online-bookstore.service
 Usage
 Access the website via the domain or public IP of your EC2 instance.
-
 Admin panel: /admin
-
 Start exploring the bookstore!
-
 About
 No description, website, or topics provided.
+
 Resources
- Readme
- Activity
-Stars
- 0 stars
-Watchers
- 1 watching
-Forks
- 0 forks
-Report repository
-Releases
-No releases published
-Packages
-No packages published
-Deployments
-97
- github-pages last month
-+ 96 deployments
-Languages
-HTML
-66.7%
- 
-JavaScript
-13.2%
- 
-SCSS
-13.1%
- 
-CSS
-3.4%
- 
-Python
-3.4%
- 
-Less
-0.2%
-Footer
+GitHub Repository
+Activity: 0 stars, 1 watcher, 0 forks
